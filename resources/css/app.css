@@ -1,3 +1,79 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes trainJourney {
+    0% {
+        transform: translateX(-650px);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100vw);
+        opacity: 1;
+    }
+}
+
+@keyframes cloudDriftSlow {
+    0% {
+        transform: translateX(-20%);
+    }
+    100% {
+        transform: translateX(110vw);
+    }
+}
+
+@keyframes cloudDriftFast {
+    0% {
+        transform: translateX(-30%);
+    }
+    100% {
+        transform: translateX(120vw);
+    }
+}
+
+@keyframes headlightPulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.95;
+    }
+}
+
+@keyframes trackShimmer {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 60px 0;
+    }
+}
+
+.animate-train {
+    animation: trainJourney 8s linear infinite;
+    will-change: transform;
+}
+
+.animate-cloud-slow {
+    animation: cloudDriftSlow 50s linear infinite;
+    will-change: transform;
+}
+
+.animate-cloud-fast {
+    animation: cloudDriftFast 30s linear infinite;
+    will-change: transform;
+}
+
+.animate-headlight {
+    animation: headlightPulse 1.5s ease-in-out infinite;
+}
+
+.track-pattern {
+    background-image: repeating-linear-gradient(
+        90deg,
+        #cbd5e1 0px,
+        #cbd5e1 4px,
+        transparent 4px,
+        transparent 20px
+    );
+}

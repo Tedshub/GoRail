@@ -1,58 +1,149 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GoRail — Sistem Reservasi & Manajemen Tiket Kereta Api
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+GoRail adalah aplikasi web reservasi dan manajemen tiket kereta api berbasis **Laravel 13 + Inertia.js + React.js + MySQL** dengan fitur Role-Based Access Control (RBAC), alur pembayaran manual dengan verifikasi staff, penerbitan e-ticket beserta QR Code dan download PDF, serta manajemen master data untuk administrator.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama Backend
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. 👥 Role-Based Access Control (RBAC) & Autentikasi
+Menggunakan package `spatie/laravel-permission` dengan 3 role:
+- **`customer`**: Pencarian jadwal, pemilihan kursi interaktif, booking tiket, upload bukti pembayaran, melihat & mendownload e-ticket.
+- **`staff`**: Verifikasi pembayaran (terima/tolak), melihat seluruh booking dan penumpang, export laporan booking ke CSV.
+- **`admin`**: Akses penuh mengelola master data (Stasiun, Kereta, Gerbong, Kursi, Jadwal & Tarif), mengelola user/pengguna, dan import massal data stasiun dari file CSV.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. 🚆 Pencarian Jadwal & Pemilihan Kursi
+- Filter pencarian berdasarkan stasiun asal, tujuan, dan tanggal keberangkatan.
+- Denah ketersediaan kursi (*seat map*) dinamis per gerbong dengan pengecekan konflik reservasi sebelum transaksi.
 
-## Learning Laravel
+### 3. 💳 Alur Pembayaran & State Machine
+Transisi status hanya dapat dilakukan melalui method model khusus:
+- **Status Pembayaran (`StatusPembayaran`)**: `UNPAID` (Belum Bayar) $\rightarrow$ `WAITING_VERIFICATION` (Menunggu Verifikasi) $\rightarrow$ `PAID` (Lunas) / `REJECTED` (Ditolak).
+- **Status Booking (`StatusBooking`)**: `PENDING` (Menunggu) $\rightarrow$ `CONFIRMED` (Dikonfirmasi) / `CANCELLED` (Dibatalkan) $\rightarrow$ `COMPLETED` (Selesai).
+- Saat pembayaran berstatus `PAID`, booking secara otomatis dikonfirmasi (`CONFIRMED`).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 4. 🔒 Keamanan Bukti Pembayaran
+- File bukti pembayaran disimpan pada storage privat (`storage/app/private/bukti-pembayaran/`).
+- Tidak dapat diakses publik secara langsung; diakses melalui route terproteksi dengan validasi otorisasi `PaymentPolicy`.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 5. 🎟️ E-Ticket, QR Code & Download PDF
+- Tiket hanya dapat diterbitkan setelah pembayaran lunas (`PAID`).
+- Dilengkapi QR Code unik menggunakan `simplesoftwareio/simple-qrcode`.
+- Export tiket ke dokumen PDF siap cetak menggunakan `barryvdh/laravel-dompdf`.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 6. 📁 Fitur Array & Native File I/O (Sesuai Spesifikasi)
+- **Export Laporan Booking ke CSV**: Penyusunan data menggunakan array terstruktur dan fungsi native PHP (`fopen`, `fputcsv`, `fclose`).
+- **Import Data Stasiun Massal**: Pembacaan file CSV stasiun menggunakan `fopen`, `fgetcsv`, validasi baris, dan batch insert ke database.
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 🛠️ Tech Stack & Library
 
-```bash
-composer require laravel/boost --dev
+| Komponen | Teknologi |
+|---|---|
+| **Framework Backend** | Laravel 13 (PHP 8.3+) |
+| **Database** | MySQL |
+| **Frontend Adapter** | Inertia.js (React) |
+| **RBAC / Hak Akses** | `spatie/laravel-permission` |
+| **PDF Generator** | `barryvdh/laravel-dompdf` |
+| **QR Code** | `simplesoftwareio/simple-qrcode` |
+| **File I/O** | Native PHP Streams (`fgetcsv`, `fputcsv`) |
 
-php artisan boost:install
+---
+
+## 📂 Struktur Database
+
+```
+users
+├── roles (Spatie RBAC)
+└── bookings (1:N)
+    ├── schedule (N:1)
+    │   ├── train (N:1) ── coaches (1:N) ── seats (1:N)
+    │   ├── station_asal (N:1 -> stations)
+    │   └── station_tujuan (N:1 -> stations)
+    ├── passengers (1:N)
+    ├── booking_seats (1:N -> seats)
+    └── payment (1:1)
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 👤 Akun Demo Bawaan (Seeder)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Setelah menjalankan database seeder, tersedia 3 akun default untuk pengujian:
 
-## Code of Conduct
+| Role | Email | Password |
+|---|---|---|
+| **Customer** | `customer@gorail.test` | `password` |
+| **Staff** | `staff@gorail.test` | `password` |
+| **Admin** | `admin@gorail.test` | `password` |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## ⚙️ Panduan Instalasi & Menjalankan Project
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Clone & Setup Environment
+```bash
+cp .env.example .env
+composer install
+npm install
+php artisan key:generate
+```
 
-## License
+### 2. Konfigurasi Database pada `.env`
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=GoRail
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 3. Migrasi & Seed Database
+```bash
+php artisan migrate:fresh --seed
+```
+
+### 4. Jalankan Server Pengembangan
+Terminal 1 (Laravel Server):
+```bash
+php artisan serve
+```
+
+Terminal 2 (Vite / React Build):
+```bash
+npm run dev
+```
+
+---
+
+## 🗺️ Ringkasan Route & Endpoint
+
+### Publik / Guest
+- `GET /` — Halaman Utama
+- `GET /schedules/search` — Pencarian Jadwal Kereta
+- `GET /schedules/{schedule}` — Detail Jadwal & Denah Kursi
+
+### Customer (`role:customer`)
+- `GET /bookings` — Riwayat Booking
+- `POST /bookings` — Pembuatan Booking Baru
+- `GET /bookings/{booking}` — Detail Booking
+- `POST /bookings/{booking}/cancel` — Pembatalan Booking
+- `POST /payments/{booking}/upload` — Upload Bukti Pembayaran
+- `GET /tickets/{booking}` — Tampilan E-Ticket
+- `GET /tickets/{booking}/download` — Download E-Ticket PDF
+
+### Staff (`role:staff,admin`)
+- `GET /staff/payments` — Daftar Pembayaran Menunggu Verifikasi
+- `POST /staff/payments/{payment}/verify` — Verifikasi / Tolak Pembayaran
+- `GET /reports/bookings/export` — Export Laporan Booking ke CSV
+
+### Admin (`role:admin`)
+- `RESOURCE /admin/users` — Manajemen Pengguna & Role
+- `RESOURCE /admin/stations` — Manajemen Stasiun
+- `POST /admin/stations/import` — Import Massal Stasiun (CSV)
+- `RESOURCE /admin/trains` — Manajemen Kereta Api
+- `RESOURCE /admin/coaches` — Manajemen Gerbong & Kelas
+- `RESOURCE /admin/seats` — Manajemen Kursi
+- `RESOURCE /admin/schedules` — Manajemen Jadwal & Tarif Perjalanan

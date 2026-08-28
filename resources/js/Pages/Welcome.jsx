@@ -1,360 +1,673 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
-export default function Welcome({ auth, laravelVersion, phpVersion }) {
-    const handleImageError = () => {
-        document
-            .getElementById('screenshot-container')
-            ?.classList.add('!hidden');
-        document.getElementById('docs-card')?.classList.add('!row-span-1');
-        document
-            .getElementById('docs-card-content')
-            ?.classList.add('!flex-row');
-        document.getElementById('background')?.classList.add('!hidden');
+export default function Welcome({ auth, stations, laravelVersion, phpVersion }) {
+    const daftarStasiun = stations?.data || stations || [];
+
+    // State untuk form pencarian tiket di hero
+    const tanggalHariIni = new Date().toISOString().split('T')[0];
+    const [stasiunAsal, setStasiunAsal] = useState(daftarStasiun[0]?.id || '');
+    const [stasiunTujuan, setStasiunTujuan] = useState(daftarStasiun[2]?.id || '');
+    const [tanggalKeberangkatan, setTanggalKeberangkatan] = useState(tanggalHariIni);
+    const [pesanError, setPesanError] = useState('');
+
+    const handleTukarStasiun = () => {
+        const temp = stasiunAsal;
+        setStasiunAsal(stasiunTujuan);
+        setStasiunTujuan(temp);
     };
+
+    const handleCariJadwal = (e) => {
+        e.preventDefault();
+        if (!stasiunAsal || !stasiunTujuan) {
+            setPesanError('Silakan pilih stasiun asal dan stasiun tujuan.');
+            return;
+        }
+        if (stasiunAsal === stasiunTujuan) {
+            setPesanError('Stasiun asal dan stasiun tujuan tidak boleh sama.');
+            return;
+        }
+        setPesanError('');
+
+        router.get(route('schedules.search'), {
+            asal: stasiunAsal,
+            tujuan: stasiunTujuan,
+            tanggal: tanggalKeberangkatan,
+        });
+    };
+
+    const rutePopuler = [
+        {
+            asal: 'Gambir (Jakarta)',
+            tujuan: 'Bandung',
+            kereta: 'Argo Parahyangan',
+            waktu: '3 Jam',
+            harga: 'Rp 150.000',
+            kelas: 'Eksekutif / Ekonomi',
+        },
+        {
+            asal: 'Gambir (Jakarta)',
+            tujuan: 'Yogyakarta',
+            kereta: 'Taksaka',
+            waktu: '7 Jam 15 Menit',
+            harga: 'Rp 350.000',
+            kelas: 'Eksekutif',
+        },
+        {
+            asal: 'Gambir (Jakarta)',
+            tujuan: 'Surabaya Gubeng',
+            kereta: 'Argo Bromo Anggrek',
+            waktu: '9 Jam 10 Menit',
+            harga: 'Rp 500.000',
+            kelas: 'Eksekutif',
+        },
+        {
+            asal: 'Bandung',
+            tujuan: 'Gambir (Jakarta)',
+            kereta: 'Argo Parahyangan',
+            waktu: '3 Jam',
+            harga: 'Rp 150.000',
+            kelas: 'Eksekutif / Bisnis',
+        },
+    ];
+
+    const keunggulan = [
+        {
+            icon: (
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            ),
+            judul: 'Pemesanan Instan & Praktis',
+            deskripsi: 'Cari jadwal, pilih jadwal yang sesuai, dan lakukan booking tiket hanya dalam beberapa klik.',
+        },
+        {
+            icon: (
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            ),
+            judul: 'Pilih Kursi Interaktif',
+            deskripsi: 'Denah kursi dinamis memungkinkan Anda memilih posisi tempat duduk terbaik di setiap gerbong.',
+        },
+        {
+            icon: (
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            ),
+            judul: 'Pembayaran Aman & Terverifikasi',
+            deskripsi: 'Transfer mudah dengan sistem upload bukti pembayaran yang diverifikasi langsung oleh petugas.',
+        },
+        {
+            icon: (
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+            ),
+            judul: 'E-Ticket & QR Code Instan',
+            deskripsi: 'Dapatkan e-ticket resmi dengan QR Code yang dapat diunduh dalam format PDF untuk boarding.',
+        },
+    ];
+
+    const langkahPemesanan = [
+        { no: '01', judul: 'Cari Jadwal', ket: 'Tentukan stasiun asal, stasiun tujuan, dan tanggal perjalanan Anda.' },
+        { no: '02', judul: 'Pilih Kursi', ket: 'Pilih gerbong dan nomor kursi yang tersedia pada denah interaktif.' },
+        { no: '03', judul: 'Upload Pembayaran', ket: 'Lakukan transfer pembayaran dan unggah bukti transfer secara aman.' },
+        { no: '04', judul: 'E-Ticket Terbit', ket: 'Setelah diverifikasi, download tiket PDF dan siap untuk berangkat.' },
+    ];
 
     return (
         <>
-            <Head title="Welcome" />
-            <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
-                <img
-                    id="background"
-                    className="absolute -left-20 top-0 max-w-[877px]"
-                    src="https://laravel.com/assets/img/welcome/background.svg"
-                />
-                <div className="relative flex min-h-screen flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                    <div className="relative w-full max-w-2xl px-6 lg:max-w-7xl">
-                        <header className="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
-                            <div className="flex lg:col-start-2 lg:justify-center">
-                                <svg
-                                    className="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]"
-                                    viewBox="0 0 62 65"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M61.8548 14.6253C61.8778 14.7102 61.8895 14.7978 61.8897 14.8858V28.5615C61.8898 28.737 61.8434 28.9095 61.7554 29.0614C61.6675 29.2132 61.5409 29.3392 61.3887 29.4265L49.9104 36.0351V49.1337C49.9104 49.4902 49.7209 49.8192 49.4118 49.9987L25.4519 63.7916C25.3971 63.8227 25.3372 63.8427 25.2774 63.8639C25.255 63.8714 25.2338 63.8851 25.2101 63.8913C25.0426 63.9354 24.8666 63.9354 24.6991 63.8913C24.6716 63.8838 24.6467 63.8689 24.6205 63.8589C24.5657 63.8389 24.5084 63.8215 24.456 63.7916L0.501061 49.9987C0.348882 49.9113 0.222437 49.7853 0.134469 49.6334C0.0465019 49.4816 0.000120578 49.3092 0 49.1337L0 8.10652C0 8.01678 0.0124642 7.92953 0.0348998 7.84477C0.0423783 7.8161 0.0598282 7.78993 0.0697995 7.76126C0.0884958 7.70891 0.105946 7.65531 0.133367 7.6067C0.152063 7.5743 0.179485 7.54812 0.20192 7.51821C0.230588 7.47832 0.256763 7.43719 0.290416 7.40229C0.319084 7.37362 0.356476 7.35243 0.388883 7.32751C0.425029 7.29759 0.457436 7.26518 0.498568 7.2415L12.4779 0.345059C12.6296 0.257786 12.8015 0.211853 12.9765 0.211853C13.1515 0.211853 13.3234 0.257786 13.475 0.345059L25.4531 7.2415H25.4556C25.4955 7.26643 25.5292 7.29759 25.5653 7.32626C25.5977 7.35119 25.6339 7.37362 25.6625 7.40104C25.6974 7.43719 25.7224 7.47832 25.7523 7.51821C25.7735 7.54812 25.8021 7.5743 25.8196 7.6067C25.8483 7.65656 25.8645 7.70891 25.8844 7.76126C25.8944 7.78993 25.9118 7.8161 25.9193 7.84602C25.9423 7.93096 25.954 8.01853 25.9542 8.10652V33.7317L35.9355 27.9844V14.8846C35.9355 14.7973 35.948 14.7088 35.9704 14.6253C35.9792 14.5954 35.9954 14.5692 36.0053 14.5405C36.0253 14.4882 36.0427 14.4346 36.0702 14.386C36.0888 14.3536 36.1163 14.3274 36.1375 14.2975C36.1674 14.2576 36.1923 14.2165 36.2272 14.1816C36.2559 14.1529 36.292 14.1317 36.3244 14.1068C36.3618 14.0769 36.3942 14.0445 36.4341 14.0208L48.4147 7.12434C48.5663 7.03694 48.7383 6.99094 48.9133 6.99094C49.0883 6.99094 49.2602 7.03694 49.4118 7.12434L61.3899 14.0208C61.4323 14.0457 61.4647 14.0769 61.5021 14.1055C61.5333 14.1305 61.5694 14.1529 61.5981 14.1803C61.633 14.2165 61.6579 14.2576 61.6878 14.2975C61.7103 14.3274 61.7377 14.3536 61.7551 14.386C61.7838 14.4346 61.8 14.4882 61.8199 14.5405C61.8312 14.5692 61.8474 14.5954 61.8548 14.6253ZM59.893 27.9844V16.6121L55.7013 19.0252L49.9104 22.3593V33.7317L59.8942 27.9844H59.893ZM47.9149 48.5566V37.1768L42.2187 40.4299L25.953 49.7133V61.2003L47.9149 48.5566ZM1.99677 9.83281V48.5566L23.9562 61.199V49.7145L12.4841 43.2219L12.4804 43.2194L12.4754 43.2169C12.4368 43.1945 12.4044 43.1621 12.3682 43.1347C12.3371 43.1097 12.3009 43.0898 12.2735 43.0624L12.271 43.0586C12.2386 43.0275 12.2162 42.9888 12.1887 42.9539C12.1638 42.9203 12.1339 42.8916 12.114 42.8567L12.1127 42.853C12.0903 42.8156 12.0766 42.7707 12.0604 42.7283C12.0442 42.6909 12.023 42.656 12.013 42.6161C12.0005 42.5688 11.998 42.5177 11.9931 42.4691C11.9881 42.4317 11.9781 42.3943 11.9781 42.3569V15.5801L6.18848 12.2446L1.99677 9.83281ZM12.9777 2.36177L2.99764 8.10652L12.9752 13.8513L22.9541 8.10527L12.9752 2.36177H12.9777ZM18.1678 38.2138L23.9574 34.8809V9.83281L19.7657 12.2459L13.9749 15.5801V40.6281L18.1678 38.2138ZM48.9133 9.14105L38.9344 14.8858L48.9133 20.6305L58.8909 14.8846L48.9133 9.14105ZM47.9149 22.3593L42.124 19.0252L37.9323 16.6121V27.9844L43.7219 31.3174L47.9149 33.7317V22.3593ZM24.9533 47.987L39.59 39.631L46.9065 35.4555L36.9352 29.7145L25.4544 36.3242L14.9907 42.3482L24.9533 47.987Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                            </div>
-                            <nav className="-mx-3 flex flex-1 justify-end">
-                                {auth.user ? (
+            <Head title="GoRail — Reservasi Tiket Kereta Api Terpercaya" />
+
+            <div className="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col justify-between selection:bg-emerald-600 selection:text-white">
+                {/* ─── NAVBAR ─────────────────────────────────────────────── */}
+                <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                        {/* Brand Logo */}
+                        <Link href="/" className="flex items-center gap-3 group">
+                            <img
+                                src="/logo_1.jpeg"
+                                alt="GoRail Logo"
+                                className="h-12 w-auto object-contain rounded-lg shadow-sm group-hover:scale-105 transition duration-200"
+                            />
+                        </Link>
+
+                        {/* Navigation Links */}
+                        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+                            <a href="#cari-tiket" className="hover:text-emerald-600 transition">Cari Tiket</a>
+                            <a href="#rute-populer" className="hover:text-emerald-600 transition">Rute Populer</a>
+                            <a href="#keunggulan" className="hover:text-emerald-600 transition">Keunggulan</a>
+                            <a href="#cara-pesan" className="hover:text-emerald-600 transition">Panduan</a>
+                        </nav>
+
+                        {/* Auth Buttons */}
+                        <div className="flex items-center gap-3">
+                            {auth?.user ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="hidden sm:inline text-xs text-slate-500 font-medium">
+                                        Halo, <strong className="text-slate-800">{auth.user.name}</strong>
+                                    </span>
                                     <Link
                                         href={route('dashboard')}
-                                        className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition"
                                     >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                        </svg>
                                         Dashboard
                                     </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href={route('login')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                        >
-                                            Log in
-                                        </Link>
-                                        <Link
-                                            href={route('register')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                        >
-                                            Register
-                                        </Link>
-                                    </>
-                                )}
-                            </nav>
-                        </header>
-
-                        <main className="mt-6">
-                            <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-                                <a
-                                    href="https://laravel.com/docs"
-                                    id="docs-card"
-                                    className="flex flex-col items-start gap-6 overflow-hidden rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] md:row-span-3 lg:p-10 lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div
-                                        id="screenshot-container"
-                                        className="relative flex w-full flex-1 items-stretch"
+                                </div>
+                            ) : (
+                                <>
+                                    <Link
+                                        href={route('login')}
+                                        className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition"
                                     >
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-light.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.06)] dark:hidden"
-                                            onError={handleImageError}
-                                        />
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-dark.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="hidden aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.25)] dark:block"
-                                        />
-                                        <div className="absolute -bottom-16 -left-16 h-40 w-[calc(100%+8rem)] bg-gradient-to-b from-transparent via-white to-white dark:via-zinc-900 dark:to-zinc-900"></div>
-                                    </div>
+                                        Masuk
+                                    </Link>
+                                    <Link
+                                        href={route('register')}
+                                        className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-lg shadow-sm transition"
+                                    >
+                                        Daftar
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </header>
 
-                                    <div className="relative flex items-center gap-6 lg:items-end">
-                                        <div
-                                            id="docs-card-content"
-                                            className="flex items-start gap-6 lg:flex-col"
-                                        >
-                                            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                                <svg
-                                                    className="size-5 sm:size-6"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="M23 4a1 1 0 0 0-1.447-.894L12.224 7.77a.5.5 0 0 1-.448 0L2.447 3.106A1 1 0 0 0 1 4v13.382a1.99 1.99 0 0 0 1.105 1.79l9.448 4.728c.14.065.293.1.447.1.154-.005.306-.04.447-.105l9.453-4.724a1.99 1.99 0 0 0 1.1-1.789V4ZM3 6.023a.25.25 0 0 1 .362-.223l7.5 3.75a.251.251 0 0 1 .138.223v11.2a.25.25 0 0 1-.362.224l-7.5-3.75a.25.25 0 0 1-.138-.22V6.023Zm18 11.2a.25.25 0 0 1-.138.224l-7.5 3.75a.249.249 0 0 1-.329-.099.249.249 0 0 1-.033-.12V9.772a.251.251 0 0 1 .138-.224l7.5-3.75a.25.25 0 0 1 .362.224v11.2Z"
-                                                    />
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="m3.55 1.893 8 4.048a1.008 1.008 0 0 0 .9 0l8-4.048a1 1 0 0 0-.9-1.785l-7.322 3.706a.506.506 0 0 1-.452 0L4.454.108a1 1 0 0 0-.9 1.785H3.55Z"
-                                                    />
+                {/* ─── HERO SECTION WITH ANIMATED TRAIN BACKGROUND ────────── */}
+                <section id="cari-tiket" className="relative pt-12 pb-24 lg:pt-16 lg:pb-32 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+                    {/* ─── DYNAMIC TRAIN & LANDSCAPE ANIMATION BACKGROUND ─── */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+                        {/* Night / Dusk Sky Glow */}
+                        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-96 bg-gradient-to-b from-emerald-500/15 via-teal-500/5 to-transparent rounded-full blur-3xl"></div>
+
+                        {/* Drifting Clouds */}
+                        <div className="absolute top-8 left-0 opacity-20 animate-cloud-slow">
+                            <svg width="240" height="60" viewBox="0 0 240 60" fill="none">
+                                <path d="M20 40c0-11 9-20 20-20 3 0 6 1 8 2 4-12 15-20 28-20 16 0 29 11 31 26 3-2 7-3 11-3 12 0 22 10 22 22v3H20v-7z" fill="white" />
+                            </svg>
+                        </div>
+                        <div className="absolute top-20 left-1/3 opacity-15 animate-cloud-fast">
+                            <svg width="180" height="45" viewBox="0 0 180 45" fill="none">
+                                <path d="M15 30c0-8 7-15 15-15 2 0 4 1 6 2 3-9 11-15 21-15 12 0 22 8 23 20 2-2 5-2 8-2 9 0 17 8 17 17v3H15v-5z" fill="white" />
+                            </svg>
+                        </div>
+
+                        {/* Distant Mountain Silhouette */}
+                        <div className="absolute bottom-28 inset-x-0 h-40 opacity-20">
+                            <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 200" fill="none">
+                                <path d="M0 200L180 110L360 160L560 80L740 140L980 60L1180 130L1340 90L1440 150V200H0Z" fill="#10b981" fillOpacity="0.3" />
+                                <path d="M0 200L120 140L280 170L480 110L680 160L880 100L1080 150L1280 120L1440 170V200H0Z" fill="#0f172a" fillOpacity="0.7" />
+                            </svg>
+                        </div>
+
+                        {/* Railway Electric Overhead Wires & Poles */}
+                        <div className="absolute bottom-24 inset-x-0 h-10 border-b border-emerald-500/20 opacity-30 flex justify-around">
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className="w-[2px] h-10 bg-slate-600/40 relative">
+                                    <div className="w-4 h-[2px] bg-slate-500/40 -ml-2 top-2 absolute"></div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Railway Track */}
+                        <div className="absolute bottom-20 inset-x-0 h-4 bg-slate-950/80 border-t border-b border-emerald-500/30">
+                            <div className="w-full h-full track-pattern opacity-40"></div>
+                        </div>
+
+                        {/* ─── ANIMATED HIGH-SPEED BULLET TRAIN ─── */}
+                        <div className="absolute bottom-[86px] left-0 w-[620px] h-12 animate-train z-10">
+                            <svg viewBox="0 0 620 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_16px_rgba(16,185,129,0.35)]">
+                                {/* Headlight Beam Cone */}
+                                <polygon points="615,28 780,10 780,45 615,35" fill="url(#headlightGradient)" className="animate-headlight" />
+
+                                {/* Speed Motion Trail Lines Behind */}
+                                <line x1="0" y1="20" x2="60" y2="20" stroke="#10b981" strokeWidth="2" strokeDasharray="8 6" opacity="0.6" />
+                                <line x1="10" y1="30" x2="80" y2="30" stroke="#34d399" strokeWidth="2" strokeDasharray="12 8" opacity="0.8" />
+                                <line x1="5" y1="38" x2="70" y2="38" stroke="#10b981" strokeWidth="1.5" strokeDasharray="6 6" opacity="0.5" />
+
+                                {/* ─── CARRIAGE 3 (Rear) ─── */}
+                                <g transform="translate(90, 8)">
+                                    <rect x="0" y="0" width="120" height="34" rx="4" fill="#f8fafc" />
+                                    <rect x="0" y="24" width="120" height="6" fill="#059669" />
+                                    <rect x="0" y="30" width="120" height="4" fill="#0f172a" />
+                                    {/* Windows */}
+                                    <rect x="12" y="7" width="18" height="11" rx="2" fill="#0284c7" fillOpacity="0.8" />
+                                    <rect x="38" y="7" width="18" height="11" rx="2" fill="#0284c7" fillOpacity="0.8" />
+                                    <rect x="64" y="7" width="18" height="11" rx="2" fill="#0284c7" fillOpacity="0.8" />
+                                    <rect x="90" y="7" width="18" height="11" rx="2" fill="#0284c7" fillOpacity="0.8" />
+                                    {/* Wheels */}
+                                    <circle cx="25" cy="36" r="4" fill="#334155" />
+                                    <circle cx="95" cy="36" r="4" fill="#334155" />
+                                </g>
+
+                                {/* Coupler */}
+                                <rect x="210" y="22" width="8" height="6" rx="1" fill="#475569" />
+
+                                {/* ─── CARRIAGE 2 (Middle) ─── */}
+                                <g transform="translate(218, 8)">
+                                    <rect x="0" y="0" width="130" height="34" rx="4" fill="#f8fafc" />
+                                    {/* GoRail Emerald Stripe */}
+                                    <rect x="0" y="24" width="130" height="6" fill="#10b981" />
+                                    <rect x="0" y="30" width="130" height="4" fill="#0f172a" />
+                                    {/* Windows with warm light */}
+                                    <rect x="12" y="7" width="18" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="38" y="7" width="18" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="64" y="7" width="18" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="90" y="7" width="18" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    {/* Pantograph (Roof electrical connector) */}
+                                    <path d="M60 0L65 -6L75 -6L80 0" stroke="#64748b" strokeWidth="1.5" fill="none" />
+                                    {/* Wheels */}
+                                    <circle cx="28" cy="36" r="4" fill="#334155" />
+                                    <circle cx="102" cy="36" r="4" fill="#334155" />
+                                </g>
+
+                                {/* Coupler */}
+                                <rect x="348" y="22" width="8" height="6" rx="1" fill="#475569" />
+
+                                {/* ─── CARRIAGE 1 (Lead Bullet Locomotive) ─── */}
+                                <g transform="translate(356, 8)">
+                                    {/* Aerodynamic Locomotive Body */}
+                                    <path d="M0 0 H180 Q230 4 255 24 Q260 29 255 34 H0 Z" fill="#ffffff" />
+                                    {/* Emerald Dynamic Swoosh Stripe */}
+                                    <path d="M0 22 H210 Q240 25 252 32 H0 Z" fill="#059669" />
+                                    <rect x="0" y="30" width="250" height="4" fill="#0f172a" />
+
+                                    {/* Front Cockpit Aerodynamic Window */}
+                                    <path d="M195 6 Q222 10 236 20 H195 Z" fill="#0f172a" />
+
+                                    {/* Passenger Windows */}
+                                    <rect x="18" y="7" width="20" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="48" y="7" width="20" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="78" y="7" width="20" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="108" y="7" width="20" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+                                    <rect x="138" y="7" width="20" height="11" rx="2" fill="#38bdf8" fillOpacity="0.9" />
+
+                                    {/* GoRail Brand Accent on Train Head */}
+                                    <circle cx="178" cy="18" r="4" fill="#10b981" />
+
+                                    {/* Headlight Glowing Point */}
+                                    <circle cx="254" cy="30" r="3" fill="#fef08a" />
+                                    <circle cx="254" cy="30" r="5" fill="#fef08a" fillOpacity="0.5" />
+
+                                    {/* Wheels */}
+                                    <circle cx="30" cy="36" r="4" fill="#334155" />
+                                    <circle cx="120" cy="36" r="4" fill="#334155" />
+                                    <circle cx="190" cy="36" r="4" fill="#334155" />
+                                </g>
+
+                                <defs>
+                                    <linearGradient id="headlightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#fef08a" stopOpacity="0.8" />
+                                        <stop offset="60%" stopColor="#fef08a" stopOpacity="0.2" />
+                                        <stop offset="100%" stopColor="#fef08a" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-20">
+                        {/* Hero Text */}
+                        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-12">
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-sm">
+                                Perjalanan Nyaman & Cepat Bersama <span className="text-emerald-400">GoRail</span>
+                            </h1>
+                            <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
+                                Pesan tiket kereta api antar kota secara online dengan cepat, pilih kursi favorit Anda secara langsung, dan dapatkan e-ticket instan.
+                            </p>
+                        </div>
+
+                        {/* ─── TICKET SEARCH WIDGET CARD ─────────────────────── */}
+                        <div className="max-w-4xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl shadow-black/40 border border-white/20 p-6 sm:p-8 text-slate-900">
+                            <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-6">
+                                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900">Cari Jadwal Perjalanan Kereta</h2>
+                                    <p className="text-xs text-slate-500">Tentukan stasiun rute dan tanggal keberangkatan</p>
+                                </div>
+                            </div>
+
+                            {pesanError && (
+                                <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {pesanError}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleCariJadwal} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                    {/* Stasiun Asal */}
+                                    <div className="md:col-span-5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                            Stasiun Asal
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
                                             </div>
+                                            <select
+                                                value={stasiunAsal}
+                                                onChange={(e) => setStasiunAsal(e.target.value)}
+                                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                                                required
+                                            >
+                                                <option value="">Pilih Stasiun Asal</option>
+                                                {daftarStasiun.map((stasiun) => (
+                                                    <option key={stasiun.id} value={stasiun.id}>
+                                                        {stasiun.nama_stasiun} ({stasiun.kode_stasiun}) - {stasiun.kota}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
 
-                                            <div className="pt-3 sm:pt-5 lg:pt-0">
-                                                <h2 className="text-xl font-semibold text-black dark:text-white">
-                                                    Documentation
-                                                </h2>
+                                    {/* Swap Button */}
+                                    <div className="md:col-span-2 flex justify-center pt-2 md:pt-6">
+                                        <button
+                                            type="button"
+                                            onClick={handleTukarStasiun}
+                                            title="Tukar Stasiun"
+                                            className="p-2.5 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 transition shadow-sm active:rotate-180"
+                                        >
+                                            <svg className="w-5 h-5 transition transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                        </button>
+                                    </div>
 
-                                                <p className="mt-4 text-sm/relaxed">
-                                                    Laravel has wonderful
-                                                    documentation covering every
-                                                    aspect of the framework.
-                                                    Whether you are a newcomer
-                                                    or have prior experience
-                                                    with Laravel, we recommend
-                                                    reading our documentation
-                                                    from beginning to end.
-                                                </p>
+                                    {/* Stasiun Tujuan */}
+                                    <div className="md:col-span-5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                            Stasiun Tujuan
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <select
+                                                value={stasiunTujuan}
+                                                onChange={(e) => setStasiunTujuan(e.target.value)}
+                                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                                                required
+                                            >
+                                                <option value="">Pilih Stasiun Tujuan</option>
+                                                {daftarStasiun.map((stasiun) => (
+                                                    <option key={stasiun.id} value={stasiun.id}>
+                                                        {stasiun.nama_stasiun} ({stasiun.kode_stasiun}) - {stasiun.kota}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                    {/* Tanggal Berangkat */}
+                                    <div className="md:col-span-8">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                            Tanggal Keberangkatan
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="date"
+                                                min={tanggalHariIni}
+                                                value={tanggalKeberangkatan}
+                                                onChange={(e) => setTanggalKeberangkatan(e.target.value)}
+                                                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Submit Search Button */}
+                                    <div className="md:col-span-4">
+                                        <button
+                                            type="submit"
+                                            className="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 flex items-center justify-center gap-2 transition duration-200"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            Cari Kereta
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── RUTE POPULER SECTION ───────────────────────────────── */}
+                <section id="rute-populer" className="py-16 bg-white border-t border-slate-200/60">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10">
+                            <div>
+                                <span className="text-emerald-600 text-xs font-bold tracking-wider uppercase">
+                                    Destinasi Favorit
+                                </span>
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+                                    Rute Kereta Populer
+                                </h2>
+                            </div>
+                            <p className="text-sm text-slate-500 mt-2 sm:mt-0">
+                                Jadwal perjalanan dengan pilihan kelas terbaik
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {rutePopuler.map((rute, idx) => (
+                                <div
+                                    key={idx}
+                                    className="group bg-slate-50 hover:bg-white rounded-2xl p-5 border border-slate-200 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-900/5 transition duration-300 flex flex-col justify-between"
+                                >
+                                    <div>
+                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                                            <span className="font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
+                                                {rute.kereta}
+                                            </span>
+                                            <span>⏱️ {rute.waktu}</span>
+                                        </div>
+
+                                        <div className="space-y-1 mb-4">
+                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                {rute.asal}
+                                            </div>
+                                            <div className="pl-1 text-slate-400 text-xs">↓</div>
+                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                                <span className="w-2 h-2 rounded-full bg-slate-800"></span>
+                                                {rute.tujuan}
                                             </div>
                                         </div>
 
-                                        <svg
-                                            className="size-6 shrink-0 stroke-[#FF2D20]"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth="1.5"
+                                        <div className="text-xs text-slate-500 mb-4">
+                                            Kelas: <span className="font-medium text-slate-700">{rute.kelas}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                                        <div>
+                                            <span className="text-[10px] text-slate-400 block">Mulai dari</span>
+                                            <span className="text-base font-extrabold text-emerald-600">
+                                                {rute.harga}
+                                            </span>
+                                        </div>
+                                        <a
+                                            href="#cari-tiket"
+                                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                            />
-                                        </svg>
-                                    </div>
-                                </a>
-
-                                <a
-                                    href="https://laracasts.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M24 8.25a.5.5 0 0 0-.5-.5H.5a.5.5 0 0 0-.5.5v12a2.5 2.5 0 0 0 2.5 2.5h19a2.5 2.5 0 0 0 2.5-2.5v-12Zm-7.765 5.868a1.221 1.221 0 0 1 0 2.264l-6.626 2.776A1.153 1.153 0 0 1 8 18.123v-5.746a1.151 1.151 0 0 1 1.609-1.035l6.626 2.776ZM19.564 1.677a.25.25 0 0 0-.177-.427H15.6a.106.106 0 0 0-.072.03l-4.54 4.543a.25.25 0 0 0 .177.427h3.783c.027 0 .054-.01.073-.03l4.543-4.543ZM22.071 1.318a.047.047 0 0 0-.045.013l-4.492 4.492a.249.249 0 0 0 .038.385.25.25 0 0 0 .14.042h5.784a.5.5 0 0 0 .5-.5v-2a2.5 2.5 0 0 0-1.925-2.432ZM13.014 1.677a.25.25 0 0 0-.178-.427H9.101a.106.106 0 0 0-.073.03l-4.54 4.543a.25.25 0 0 0 .177.427H8.4a.106.106 0 0 0 .073-.03l4.54-4.543ZM6.513 1.677a.25.25 0 0 0-.177-.427H2.5A2.5 2.5 0 0 0 0 3.75v2a.5.5 0 0 0 .5.5h1.4a.106.106 0 0 0 .073-.03l4.54-4.543Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laracasts
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laracasts offers thousands of video
-                                            tutorials on Laravel, PHP, and
-                                            JavaScript development. Check them
-                                            out, see for yourself, and massively
-                                            level up your development skills in
-                                            the process.
-                                        </p>
-                                    </div>
-
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
-
-                                <a
-                                    href="https://laravel-news.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M8.75 4.5H5.5c-.69 0-1.25.56-1.25 1.25v4.75c0 .69.56 1.25 1.25 1.25h3.25c.69 0 1.25-.56 1.25-1.25V5.75c0-.69-.56-1.25-1.25-1.25Z" />
-                                                <path d="M24 10a3 3 0 0 0-3-3h-2V2.5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2V20a3.5 3.5 0 0 0 3.5 3.5h17A3.5 3.5 0 0 0 24 20V10ZM3.5 21.5A1.5 1.5 0 0 1 2 20V3a.5.5 0 0 1 .5-.5h14a.5.5 0 0 1 .5.5v17c0 .295.037.588.11.874a.5.5 0 0 1-.484.625L3.5 21.5ZM22 20a1.5 1.5 0 1 1-3 0V9.5a.5.5 0 0 1 .5-.5H21a1 1 0 0 1 1 1v10Z" />
-                                                <path d="M12.751 6.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 7.3v-.5a.75.75 0 0 1 .751-.753ZM12.751 10.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 11.3v-.5a.75.75 0 0 1 .751-.753ZM4.751 14.047h10a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-10A.75.75 0 0 1 4 15.3v-.5a.75.75 0 0 1 .751-.753ZM4.75 18.047h7.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-7.5A.75.75 0 0 1 4 19.3v-.5a.75.75 0 0 1 .75-.753Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laravel News
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel News is a community driven
-                                            portal and newsletter aggregating
-                                            all of the latest and most important
-                                            news in the Laravel ecosystem,
-                                            including new package releases and
-                                            tutorials.
-                                        </p>
-                                    </div>
-
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
-
-                                <div className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M16.597 12.635a.247.247 0 0 0-.08-.237 2.234 2.234 0 0 1-.769-1.68c.001-.195.03-.39.084-.578a.25.25 0 0 0-.09-.267 8.8 8.8 0 0 0-4.826-1.66.25.25 0 0 0-.268.181 2.5 2.5 0 0 1-2.4 1.824.045.045 0 0 0-.045.037 12.255 12.255 0 0 0-.093 3.86.251.251 0 0 0 .208.214c2.22.366 4.367 1.08 6.362 2.118a.252.252 0 0 0 .32-.079 10.09 10.09 0 0 0 1.597-3.733ZM13.616 17.968a.25.25 0 0 0-.063-.407A19.697 19.697 0 0 0 8.91 15.98a.25.25 0 0 0-.287.325c.151.455.334.898.548 1.328.437.827.981 1.594 1.619 2.28a.249.249 0 0 0 .32.044 29.13 29.13 0 0 0 2.506-1.99ZM6.303 14.105a.25.25 0 0 0 .265-.274 13.048 13.048 0 0 1 .205-4.045.062.062 0 0 0-.022-.07 2.5 2.5 0 0 1-.777-.982.25.25 0 0 0-.271-.149 11 11 0 0 0-5.6 2.815.255.255 0 0 0-.075.163c-.008.135-.02.27-.02.406.002.8.084 1.598.246 2.381a.25.25 0 0 0 .303.193 19.924 19.924 0 0 1 5.746-.438ZM9.228 20.914a.25.25 0 0 0 .1-.393 11.53 11.53 0 0 1-1.5-2.22 12.238 12.238 0 0 1-.91-2.465.248.248 0 0 0-.22-.187 18.876 18.876 0 0 0-5.69.33.249.249 0 0 0-.179.336c.838 2.142 2.272 4 4.132 5.353a.254.254 0 0 0 .15.048c1.41-.01 2.807-.282 4.117-.802ZM18.93 12.957l-.005-.008a.25.25 0 0 0-.268-.082 2.21 2.21 0 0 1-.41.081.25.25 0 0 0-.217.2c-.582 2.66-2.127 5.35-5.75 7.843a.248.248 0 0 0-.09.299.25.25 0 0 0 .065.091 28.703 28.703 0 0 0 2.662 2.12.246.246 0 0 0 .209.037c2.579-.701 4.85-2.242 6.456-4.378a.25.25 0 0 0 .048-.189 13.51 13.51 0 0 0-2.7-6.014ZM5.702 7.058a.254.254 0 0 0 .2-.165A2.488 2.488 0 0 1 7.98 5.245a.093.093 0 0 0 .078-.062 19.734 19.734 0 0 1 3.055-4.74.25.25 0 0 0-.21-.41 12.009 12.009 0 0 0-10.4 8.558.25.25 0 0 0 .373.281 12.912 12.912 0 0 1 4.826-1.814ZM10.773 22.052a.25.25 0 0 0-.28-.046c-.758.356-1.55.635-2.365.833a.25.25 0 0 0-.022.48c1.252.43 2.568.65 3.893.65.1 0 .2 0 .3-.008a.25.25 0 0 0 .147-.444c-.526-.424-1.1-.917-1.673-1.465ZM18.744 8.436a.249.249 0 0 0 .15.228 2.246 2.246 0 0 1 1.352 2.054c0 .337-.08.67-.23.972a.25.25 0 0 0 .042.28l.007.009a15.016 15.016 0 0 1 2.52 4.6.25.25 0 0 0 .37.132.25.25 0 0 0 .096-.114c.623-1.464.944-3.039.945-4.63a12.005 12.005 0 0 0-5.78-10.258.25.25 0 0 0-.373.274c.547 2.109.85 4.274.901 6.453ZM9.61 5.38a.25.25 0 0 0 .08.31c.34.24.616.561.8.935a.25.25 0 0 0 .3.127.631.631 0 0 1 .206-.034c2.054.078 4.036.772 5.69 1.991a.251.251 0 0 0 .267.024c.046-.024.093-.047.141-.067a.25.25 0 0 0 .151-.23A29.98 29.98 0 0 0 15.957.764a.25.25 0 0 0-.16-.164 11.924 11.924 0 0 0-2.21-.518.252.252 0 0 0-.215.076A22.456 22.456 0 0 0 9.61 5.38Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Vibrant Ecosystem
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel's robust library of
-                                            first-party tools and libraries,
-                                            such as{' '}
-                                            <a
-                                                href="https://forge.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]"
-                                            >
-                                                Forge
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://vapor.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Vapor
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://nova.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Nova
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://envoyer.io"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Envoyer
-                                            </a>
-                                            , and{' '}
-                                            <a
-                                                href="https://herd.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Herd
-                                            </a>{' '}
-                                            help you take your projects to the
-                                            next level. Pair them with powerful
-                                            open source libraries like{' '}
-                                            <a
-                                                href="https://laravel.com/docs/billing"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Cashier
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/dusk"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Dusk
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/broadcasting"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Echo
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/horizon"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Horizon
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/sanctum"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Sanctum
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/telescope"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Telescope
-                                            </a>
-                                            , and more.
-                                        </p>
+                                            Pesan
+                                        </a>
                                     </div>
                                 </div>
-                            </div>
-                        </main>
-
-                        <footer className="py-16 text-center text-sm text-black dark:text-white/70">
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
-                        </footer>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                </section>
+
+                {/* ─── KEUNGGULAN SECTION ─────────────────────────────────── */}
+                <section id="keunggulan" className="py-16 bg-slate-50 border-t border-slate-200/60">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center max-w-2xl mx-auto mb-12">
+                            <span className="text-emerald-600 text-xs font-bold tracking-wider uppercase">
+                                Layanan Unggulan
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+                                Mengapa Memilih GoRail?
+                            </h2>
+                            <p className="text-sm text-slate-600 mt-2">
+                                Kenyamanan, kemudahan, dan kepastian perjalanan Anda adalah prioritas utama kami.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {keunggulan.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-5">
+                                        {item.icon}
+                                    </div>
+                                    <h3 className="text-base font-bold text-slate-900 mb-2">
+                                        {item.judul}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                        {item.deskripsi}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── CARA PEMESANAN SECTION ─────────────────────────────── */}
+                <section id="cara-pesan" className="py-16 bg-white border-t border-slate-200/60">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center max-w-2xl mx-auto mb-12">
+                            <span className="text-emerald-600 text-xs font-bold tracking-wider uppercase">
+                                Alur Reservasi
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+                                4 Langkah Mudah Memesan Tiket
+                            </h2>
+                            <p className="text-sm text-slate-600 mt-2">
+                                Proses pemesanan terstruktur dari pencarian hingga e-ticket terbit.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {langkahPemesanan.map((item, idx) => (
+                                <div key={idx} className="relative bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                                    <div className="text-3xl font-black text-emerald-600/30 mb-2 font-mono">
+                                        {item.no}
+                                    </div>
+                                    <h3 className="text-base font-bold text-slate-900 mb-1">
+                                        {item.judul}
+                                    </h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed">
+                                        {item.ket}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── CTA BANNER SECTION ─────────────────────────────────── */}
+                <section className="py-12 bg-emerald-700 text-white relative overflow-hidden">
+                    <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div>
+                            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                                Siap Menjelajahi Kota Tujuan Anda?
+                            </h2>
+                            <p className="text-emerald-100 text-sm mt-1">
+                                Dapatkan tiket perjalanan kereta api dengan harga resmi dan kursi terbaik hari ini.
+                            </p>
+                        </div>
+                        <a
+                            href="#cari-tiket"
+                            className="px-6 py-3 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 font-bold text-sm rounded-xl shadow-lg transition duration-200 shrink-0"
+                        >
+                            Cari Tiket Sekarang
+                        </a>
+                    </div>
+                </section>
+
+                {/* ─── FOOTER ─────────────────────────────────────────────── */}
+                <footer className="bg-slate-900 text-slate-400 text-xs py-12 border-t border-slate-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-10 border-b border-slate-800">
+                            <div className="md:col-span-5 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src="/logo_1.jpeg"
+                                        alt="GoRail"
+                                        className="h-10 w-auto object-contain rounded-md bg-white p-1"
+                                    />
+                                    <span className="text-xl font-extrabold text-white tracking-tight">
+                                        Go<span className="text-emerald-500">Rail</span>
+                                    </span>
+                                </div>
+                                <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
+                                    Sistem reservasi tiket kereta api berbasis Laravel 13 & Inertia React. Kemudahan perjalanan antar kota dengan keamanan dan kenyamanan terjamin.
+                                </p>
+                            </div>
+
+                            <div className="md:col-span-3 space-y-2">
+                                <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-3">Tautan Cepat</h4>
+                                <ul className="space-y-2">
+                                    <li><a href="#cari-tiket" className="hover:text-emerald-400 transition">Pencarian Jadwal</a></li>
+                                    <li><a href="#rute-populer" className="hover:text-emerald-400 transition">Rute Populer</a></li>
+                                    <li><a href="#cara-pesan" className="hover:text-emerald-400 transition">Panduan Pemesanan</a></li>
+                                </ul>
+                            </div>
+
+                            <div className="md:col-span-4 space-y-2">
+                                <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-3">Informasi Sistem</h4>
+                                <p className="text-slate-400">
+                                    Laravel v{laravelVersion} · PHP v{phpVersion}
+                                </p>
+                                <p className="text-slate-500 text-[11px]">
+                                    Didukung RBAC Multi-Role, QR Code Boarding, dan Unduh E-Ticket PDF.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500">
+                            <div>
+                                &copy; {new Date().getFullYear()} GoRail. Hak Cipta Dilindungi Undang-Undang.
+                            </div>
+                            <div className="flex gap-6">
+                                <span>Reservasi Tiket Kereta Api Indonesia</span>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </>
     );
