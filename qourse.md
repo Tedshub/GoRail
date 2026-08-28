@@ -196,3 +196,244 @@ Array digunakan secara intensif dalam pemrosesan data, validasi, dan transformas
 
 4. **Penerbitan & Unduh E-Ticket Format PDF (`TicketController.php`):**
    - Merender template tiket HTML/Blade lengkap dengan QR Code menjadi file PDF dinamis yang dapat disimpan dan dicetak penumpang untuk keperluan boarding.
+---
+
+### 5. Implementasi Struktur Data dan Variabel ke Dalam Kode Program
+
+Struktur data yang telah dirancang diwujudkan dan diimplementasikan secara konkret pada berbagai layer arsitektur kode program GoRail:
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│                    IMPLEMENTASI STRUKTUR DATA GORAIL                  │
+├───────────────────────────┬───────────────────────────────────────────┤
+│ 1. Database Schema        │ Migrations (Blueprint, Foreign Key, Types)│
+│ 2. Object Mapping (ORM)   │ Eloquent Models ($fillable, casts, Relasi)│
+│ 3. Custom Types           │ PHP 8 Backed Enums                        │
+│ 4. Request Validation     │ FormRequest Rules (Type Enforcement)      │
+│ 5. Memory / Runtime Data  │ Controller Variables (Nested Array, Map)  │
+│ 6. Response Layer (DTO)   │ JsonResource Transformation               │
+└───────────────────────────┴───────────────────────────────────────────┘
+```
+
+Berikut adalah rincian file dan contoh kode implementasinya:
+
+---
+
+#### A. Layer Skema Basis Data (Database Migrations)
+Struktur tabel fisik, tipe data primitif, constraint, dan foreign key didefinisikan menggunakan *Laravel Schema Blueprint* pada direktori `database/migrations/`:
+
+- **Tabel `stations` (`database/migrations/..._create_stations_table.php`):**
+  ```php
+  Schema::create('stations', function (Blueprint $table) {
+      $table->id();                                    // BigInteger (PK)
+      $table->string('kode_stasiun', 10)->unique();    // String(10) unik
+      $table->string('nama_stasiun', 100);             // String(100)
+      $table->string('kota', 100);                     // String(100)
+      $table->timestamps();
+  });
+  ```
+- **Tabel `schedules` (`database/migrations/..._create_schedules_table.php`):**
+  ```php
+  Schema::create('schedules', function (Blueprint $table) {
+      $table->id();
+      $table->foreignId('train_id')->constrained()->cascadeOnDelete();         // FK Trains
+      $table->foreignId('station_asal_id')->constrained('stations');           // FK Stations (Asal)
+      $table->foreignId('station_tujuan_id')->constrained('stations');         // FK Stations (Tujuan)
+      $table->dateTime('waktu_berangkat');                                     // DateTime
+      $table->dateTime('waktu_tiba');                                          // DateTime
+      $table->unsignedInteger('harga');                                        // Unsigned Integer
+      $table->string('kode_jadwal', 20)->unique();
+      $table->timestamps();
+  });
+  ```
+- **Tabel `bookings` & `payments` (`database/migrations/..._create_bookings_table.php` & `..._create_payments_table.php`):**
+  ```php
+  // Bookings
+  $table->foreignId('user_id')->constrained();
+  $table->foreignId('schedule_id')->constrained();
+  $table->string('kode_booking', 20)->unique();
+  $table->date('tanggal_berangkat');
+  $table->string('status', 30)->default('PENDING');
+
+  // Payments
+  $table->foreignId('booking_id')->constrained()->cascadeOnDelete();
+  $table->unsignedInteger('jumlah');
+  $table->string('bukti_pembayaran')->nullable();
+  $table->string('status', 30)->default('UNPAID');
+  $table->foreignId('verified_by')->nullable()->constrained('users');
+  $table->dateTime('waktu_verifikasi')->nullable();
+  ```
+
+---
+
+#### B. Layer Tipe Data Kustom (PHP 8 Backed Enums)
+Tipe data kustom dibuat sebagai *first-class type* pada direktori `app/Enums/` untuk menjamin bahwa variabel status hanya memuat nilai yang sah:
+
+```php
+// app/Enums/StatusBooking.php
+namespace App\Enums;
+
+enum StatusBooking: string
+{
+    case MENUNGGU = 'PENDING';
+    case DIKONFIRMASI = 'CONFIRMED';
+    case DIBATALKAN = 'CANCELLED';
+    case SELESAI = 'COMPLETED';
+}
+
+// app/Enums/StatusPembayaran.php
+namespace App\Enums;
+
+enum StatusPembayaran: string
+{
+    case BELUM_BAYAR = 'UNPAID';
+    case MENUNGGU_VERIFIKASI = 'WAITING_VERIFICATION';
+    case LUNAS = 'PAID';
+    case DITOLAK = 'REJECTED';
+}
+```
+
+---
+
+#### C. Layer Model Eloquent (ORM, Type Casting, & Relasi)
+Implementasi struktur objek data dilakukan di `app/Models/` dengan memanfaatkan:
+1. Variabel `$fillable` untuk menentukan atribut yang dapat dimanipulasi secara massal (*Mass Assignment*).
+2. Fungsi `casts()` untuk otomatis mengubah tipe data mentah database ke tipe data objek PHP yang sesuai (`DateTime`, `Integer`, `Enum`).
+3. Metode relasi data struktural (`BelongsTo`, `HasMany`, `HasOne`).
+
+Contoh pada `app/Models/Booking.php`:
+```php
+class Booking extends Model
+{
+    // 1. Variabel Atribut Struktur Data
+    protected $fillable = [
+        'user_id',
+        'schedule_id',
+        'kode_booking',
+        'status',
+        'tanggal_berangkat',
+    ];
+
+    // 2. Type Casting Otomatis
+    protected function casts(): array
+    {
+        return [
+            'status' => StatusBooking::class,  // Cast ke Enum StatusBooking
+            'tanggal_berangkat' => 'date',     // Cast ke Carbon Date
+        ];
+    }
+
+    // 3. Relasi Antar Struktur Data
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function schedule(): BelongsTo { return $this->belongsTo(Schedule::class); }
+    public function passengers(): HasMany { return $this->hasMany(Passenger::class); }
+    public function bookingSeats(): HasMany { return $this->hasMany(BookingSeat::class); }
+    public function payment(): HasOne { return $this->hasOne(Payment::class); }
+}
+```
+
+---
+
+#### D. Layer Validasi Tipe Data Input (FormRequest)
+Penegakan tipe data input sebelum data diproses ke memori dilakukan di `app/Http/Requests/StoreBookingRequest.php`:
+
+```php
+public function rules(): array
+{
+    return [
+        'schedule_id'                  => ['required', 'exists:schedules,id'], // Integer & FK Exist
+        'tanggal_berangkat'            => ['required', 'date', 'after_or_equal:today'], // Date Type
+        'seat_ids'                     => ['required', 'array', 'min:1'], // Array Type
+        'seat_ids.*'                   => ['required', 'exists:seats,id'], // Array of Integers
+        'penumpang'                    => ['required', 'array', 'min:1'], // Array of Objects
+        'penumpang.*.nama_penumpang'   => ['required', 'string', 'max:255'], // String
+        'penumpang.*.nomor_identitas'  => ['required', 'string', 'max:50'], // String
+        'penumpang.*.jenis_identitas'  => ['required', 'string', 'in:KTP,SIM,Paspor'], // Enum Rule
+    ];
+}
+```
+
+---
+
+#### E. Layer Pembuatan Variabel & Manipulasi Struktur Data di Memori (Controller Runtime)
+Di dalam controller, struktur data kompleks dibentuk dan dimanipulasi menggunakan variabel lokal array terstruktur:
+
+1. **Variabel Denah Kursi Bersarang (`ScheduleSearchController.php`):**
+   ```php
+   // Membuat struktur array hierarkis: Kereta -> Gerbong[] -> Kursi[] -> Status Ketersediaan (Boolean)
+   $denahKursi = [];
+   foreach ($schedule->train->coaches as $gerbong) {
+       $kursiPerGerbong = [];
+       foreach ($gerbong->seats as $kursi) {
+           $kursiPerGerbong[] = [
+               'id'          => $kursi->id,                                     // Integer
+               'nomor_kursi' => $kursi->nomor_kursi,                            // String
+               'tersedia'    => ! in_array($kursi->id, $kursiTerbooking),       // Boolean
+           ];
+       }
+       $denahKursi[] = [
+           'gerbong' => $gerbong->nama_gerbong,                                // String
+           'kelas'   => $gerbong->kelas->value,                                 // String Enum
+           'kursi'   => $kursiPerGerbong,                                       // Array
+       ];
+   }
+   ```
+
+2. **Variabel Transaksi Pemesanan Terstruktur (`BookingController.php`):**
+   ```php
+   // Menampung dan memproses array data penumpang dan kursi terpilih
+   $dataValid = $request->validated();
+   $jumlahKursi = count($dataValid['seat_ids']);
+   $totalHarga = $jadwalTerpilih->harga * $jumlahKursi;
+
+   // Array manifest penumpang
+   $daftarPenumpang = [];
+   foreach ($dataValid['penumpang'] as $dataPenumpang) {
+       $daftarPenumpang[] = Passenger::create([
+           'booking_id'      => $booking->id,
+           'nama_penumpang'  => $dataPenumpang['nama_penumpang'],
+           'nomor_identitas' => $dataPenumpang['nomor_identitas'],
+           'jenis_identitas' => $dataPenumpang['jenis_identitas'],
+       ]);
+   }
+   ```
+
+3. **Variabel Matrix 2D Laporan CSV (`ReportController.php`):**
+   ```php
+   // Array 2 Dimensi (Baris & Kolom) untuk file spreadsheet CSV
+   $baris = [];
+   $baris[] = ['Kode Booking', 'Nama Customer', 'Jadwal', 'Status Booking', 'Status Pembayaran', 'Jumlah'];
+
+   foreach ($daftarBooking as $booking) {
+       $baris[] = [
+           $booking->kode_booking,
+           $booking->user->name,
+           $booking->schedule->kode_jadwal,
+           $booking->status->value,
+           $booking->payment?->status->value ?? '-',
+           $booking->payment?->jumlah ?? 0,
+       ];
+   }
+   ```
+
+---
+
+#### F. Layer Transformasi Data Transfer Object (DTO - JsonResource)
+Struktur data model ditransformasikan ke dalam representasi JSON terstruktur untuk dikirim ke antarmuka React pada `app/Http/Resources/BookingResource.php`:
+
+```php
+public function toArray(Request $request): array
+{
+    return [
+        'id'                => $this->id,                                              // Integer
+        'kode_booking'      => $this->kode_booking,                                    // String
+        'status'            => $this->status->value,                                   // String (dari Enum)
+        'tanggal_berangkat' => $this->tanggal_berangkat->format('Y-m-d'),              // String Date
+        'created_at'        => $this->created_at->format('Y-m-d H:i'),                 // String DateTime
+        'user'              => new UserResource($this->whenLoaded('user')),            // Nested Object
+        'schedule'          => new ScheduleResource($this->whenLoaded('schedule')),    // Nested Object
+        'passengers'        => PassengerResource::collection($this->whenLoaded('passengers')), // Array of Objects
+        'payment'           => new PaymentResource($this->whenLoaded('payment')),      // Nested Object
+    ];
+}
+```
