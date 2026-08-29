@@ -21,7 +21,7 @@ class ScheduleSeeder extends Seeder
         $keretaAnggrek = Train::where('nama_kereta', 'Argo Bromo Anggrek')->first();
 
         if ($stasiunGmr && $stasiunBd && $keretaParahyangan) {
-            Schedule::firstOrCreate(
+            Schedule::updateOrCreate(
                 ['kode_jadwal' => 'JD-GMR-BD-01'],
                 [
                     'train_id' => $keretaParahyangan->id,
@@ -30,10 +30,13 @@ class ScheduleSeeder extends Seeder
                     'waktu_berangkat' => now()->addDays(1)->setTime(8, 0),
                     'waktu_tiba' => now()->addDays(1)->setTime(11, 0),
                     'harga' => 150000,
+                    'harga_ekonomi' => 150000,
+                    'harga_bisnis' => 200000,
+                    'harga_eksekutif' => 250000,
                 ]
             );
 
-            Schedule::firstOrCreate(
+            Schedule::updateOrCreate(
                 ['kode_jadwal' => 'JD-BD-GMR-01'],
                 [
                     'train_id' => $keretaParahyangan->id,
@@ -42,12 +45,15 @@ class ScheduleSeeder extends Seeder
                     'waktu_berangkat' => now()->addDays(1)->setTime(14, 0),
                     'waktu_tiba' => now()->addDays(1)->setTime(17, 0),
                     'harga' => 150000,
+                    'harga_ekonomi' => 150000,
+                    'harga_bisnis' => 200000,
+                    'harga_eksekutif' => 250000,
                 ]
             );
         }
 
         if ($stasiunGmr && $stasiunYk && $keretaTaksaka) {
-            Schedule::firstOrCreate(
+            Schedule::updateOrCreate(
                 ['kode_jadwal' => 'JD-GMR-YK-01'],
                 [
                     'train_id' => $keretaTaksaka->id,
@@ -56,12 +62,15 @@ class ScheduleSeeder extends Seeder
                     'waktu_berangkat' => now()->addDays(1)->setTime(9, 30),
                     'waktu_tiba' => now()->addDays(1)->setTime(16, 45),
                     'harga' => 350000,
+                    'harga_ekonomi' => 350000,
+                    'harga_bisnis' => 450000,
+                    'harga_eksekutif' => 550000,
                 ]
             );
         }
 
         if ($stasiunGmr && $stasiunSgu && $keretaAnggrek) {
-            Schedule::firstOrCreate(
+            Schedule::updateOrCreate(
                 ['kode_jadwal' => 'JD-GMR-SGU-01'],
                 [
                     'train_id' => $keretaAnggrek->id,
@@ -70,6 +79,9 @@ class ScheduleSeeder extends Seeder
                     'waktu_berangkat' => now()->addDays(2)->setTime(8, 20),
                     'waktu_tiba' => now()->addDays(2)->setTime(17, 30),
                     'harga' => 500000,
+                    'harga_ekonomi' => 500000,
+                    'harga_bisnis' => 650000,
+                    'harga_eksekutif' => 800000,
                 ]
             );
         }

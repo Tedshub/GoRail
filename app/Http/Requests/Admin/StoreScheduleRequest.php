@@ -21,7 +21,10 @@ class StoreScheduleRequest extends FormRequest
             'station_tujuan_id' => ['required', 'exists:stations,id', 'different:station_asal_id'],
             'waktu_berangkat' => ['required', 'date'],
             'waktu_tiba' => ['required', 'date', 'after:waktu_berangkat'],
-            'harga' => ['required', 'integer', 'min:1'],
+            'harga_ekonomi' => ['required', 'integer', 'min:1'],
+            'harga_bisnis' => ['required', 'integer', 'min:1'],
+            'harga_eksekutif' => ['required', 'integer', 'min:1'],
+            'harga' => ['nullable', 'integer', 'min:1'],
             'kode_jadwal' => ['required', 'string', 'max:20', 'unique:schedules,kode_jadwal,' . $jadwalId],
         ];
     }
@@ -37,8 +40,12 @@ class StoreScheduleRequest extends FormRequest
             'waktu_berangkat.required' => 'Waktu berangkat harus diisi.',
             'waktu_tiba.required' => 'Waktu tiba harus diisi.',
             'waktu_tiba.after' => 'Waktu tiba harus setelah waktu berangkat.',
-            'harga.required' => 'Harga harus diisi.',
-            'harga.min' => 'Harga minimal 1.',
+            'harga_ekonomi.required' => 'Tarif kelas ekonomi harus diisi.',
+            'harga_ekonomi.min' => 'Tarif kelas ekonomi minimal 1.',
+            'harga_bisnis.required' => 'Tarif kelas bisnis harus diisi.',
+            'harga_bisnis.min' => 'Tarif kelas bisnis minimal 1.',
+            'harga_eksekutif.required' => 'Tarif kelas eksekutif harus diisi.',
+            'harga_eksekutif.min' => 'Tarif kelas eksekutif minimal 1.',
             'kode_jadwal.required' => 'Kode jadwal harus diisi.',
             'kode_jadwal.unique' => 'Kode jadwal sudah digunakan.',
         ];

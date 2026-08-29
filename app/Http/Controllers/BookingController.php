@@ -43,18 +43,23 @@ class BookingController extends Controller
         $userLogin = auth()->user();
         $jadwalTerpilih = Schedule::findOrFail($dataValid['schedule_id']);
 
-        // Hitung total harga berdasarkan jumlah kursi
-        $jumlahKursi = count($dataValid['seat_ids']);
-        $totalHarga = $jadwalTerpilih->harga * $jumlahKursi;
+        // Ambil data kursi beserta gerbong untuk menghitung harga berdasarkan kelas
+        $kursiTerpilih = \App\Models\Seat::with('coach')->whereIn('id', $dataValid['seat_ids'])->get();
+
+        // Hitung total harga dinamis berdasarkan tarif kelas masing-masing kursi
+        $totalHarga = 0;
+        foreach ($kursiTerpilih as $kursi) {
+            $namaKelas = $kursi->coach?->kelas?->value ?? $kursi->coach?->kelas ?? 'ekonomi';
+            $totalHarga += $jadwalTerpilih->getHargaUntukKelas($namaKelas);
+        }
 
         // Cek ketersediaan kursi sebelum booking (pakai array untuk mengecek konflik)
-        $kursiTerbooking = BookingSeat::whereHas('booking', function ($query) use ($jadwalTerpilih, $dataValid) {
+        $kursiTerbooking = BookingSeat::whereHas('booking', function ($query) use ($jadwalTerpilih) {
             $query->where('schedule_id', $jadwalTerpilih->id)
-                ->whereDate('tanggal_berangkat', $dataValid['tanggal_berangkat'])
-                ->whereNotIn('status', ['CANCELLED']);
-        })->pluck('seat_id')->toArray();
+                ->whereNotIn('status', ['CANCELLED', 'DIBATALKAN', \App\Enums\StatusBooking::DIBATALKAN->value]);
+        })->pluck('seat_id')->map(fn ($id) => (int) $id)->toArray();
 
-        $kursiDipilih = $dataValid['seat_ids'];
+        $kursiDipilih = array_map('intval', $dataValid['seat_ids']);
         $kursiKonflik = array_intersect($kursiDipilih, $kursiTerbooking);
 
         if (! empty($kursiKonflik)) {

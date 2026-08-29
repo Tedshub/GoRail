@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ScheduleResource;
-use App\Http\Resources\SeatResource;
 use App\Models\BookingSeat;
 use App\Models\Schedule;
 use App\Models\Station;
@@ -24,7 +23,7 @@ class ScheduleSearchController extends Controller
             $request->validate([
                 'asal' => 'required|exists:stations,id',
                 'tujuan' => 'required|exists:stations,id|different:asal',
-                'tanggal' => 'required|date|after_or_equal:today',
+                'tanggal' => 'required|date',
             ]);
 
             $jadwalDitemukan = Schedule::with(['train', 'stationAsal', 'stationTujuan'])
@@ -35,6 +34,14 @@ class ScheduleSearchController extends Controller
                 ->get();
 
             $hasilPencarian = ScheduleResource::collection($jadwalDitemukan);
+        } else {
+            // Tampilkan daftar jadwal aktif yang tersedia secara default
+            $semuaJadwal = Schedule::with(['train', 'stationAsal', 'stationTujuan'])
+                ->orderBy('waktu_berangkat')
+                ->take(10)
+                ->get();
+
+            $hasilPencarian = ScheduleResource::collection($semuaJadwal);
         }
 
         return Inertia::render('Public/ScheduleSearch', [
@@ -51,29 +58,37 @@ class ScheduleSearchController extends Controller
     {
         $schedule->load(['train.coaches.seats', 'stationAsal', 'stationTujuan']);
 
-        $tanggalBerangkat = $request->query('tanggal', now()->format('Y-m-d'));
+        // Ambil tanggal berangkat dari query param atau dari waktu berangkat jadwal
+        $tanggalBerangkat = $request->query('tanggal')
+            ?: ($schedule->waktu_berangkat ? $schedule->waktu_berangkat->format('Y-m-d') : now()->format('Y-m-d'));
 
-        // Kumpulkan ID kursi yang sudah dibooking pada tanggal tersebut
-        $kursiTerbooking = BookingSeat::whereHas('booking', function ($query) use ($schedule, $tanggalBerangkat) {
+        // Kumpulkan ID kursi yang sudah dibooking pada jadwal tersebut (yang belum dibatalkan)
+        $kursiTerbooking = BookingSeat::whereHas('booking', function ($query) use ($schedule) {
             $query->where('schedule_id', $schedule->id)
-                ->whereDate('tanggal_berangkat', $tanggalBerangkat)
-                ->whereNotIn('status', ['CANCELLED']);
-        })->pluck('seat_id')->toArray();
+                ->whereNotIn('status', ['CANCELLED', 'DIBATALKAN', \App\Enums\StatusBooking::DIBATALKAN->value]);
+        })->pluck('seat_id')->map(fn ($id) => (int) $id)->toArray();
 
-        // Susun array kursi per gerbong dengan status ketersediaan
+        // Susun array kursi per gerbong dengan status ketersediaan & tarif kelas
         $denahKursi = [];
         foreach ($schedule->train->coaches as $gerbong) {
+            $namaKelas = is_object($gerbong->kelas) ? $gerbong->kelas->value : $gerbong->kelas;
+            $hargaKelas = $schedule->getHargaUntukKelas($namaKelas);
+
             $kursiPerGerbong = [];
             foreach ($gerbong->seats as $kursi) {
+                $kursiId = (int) $kursi->id;
                 $kursiPerGerbong[] = [
-                    'id' => $kursi->id,
+                    'id' => $kursiId,
                     'nomor_kursi' => $kursi->nomor_kursi,
-                    'tersedia' => ! in_array($kursi->id, $kursiTerbooking),
+                    'tersedia' => ! in_array($kursiId, $kursiTerbooking, true),
+                    'harga' => $hargaKelas,
+                    'kelas' => $namaKelas,
                 ];
             }
             $denahKursi[] = [
                 'gerbong' => $gerbong->nama_gerbong,
-                'kelas' => $gerbong->kelas->value,
+                'kelas' => $namaKelas,
+                'harga' => $hargaKelas,
                 'kursi' => $kursiPerGerbong,
             ];
         }

@@ -336,10 +336,10 @@ resources/js/Pages/
 
 ## 10. Checklist Sebelum Commit Fitur Baru
 
-- [ ] Variabel lokal PHP & JS pakai bahasa Indonesia, class/route/table tetap bahasa Inggris.
-- [ ] Perubahan status booking/pembayaran lewat method khusus di model/service, bukan set kolom langsung.
-- [ ] Bukti pembayaran tersimpan di `storage/app/private`, tidak ada akses publik langsung.
-- [ ] Otorisasi dicek lewat Policy, bukan hanya `if` role di controller.
-- [ ] Validasi input lewat Form Request.
-- [ ] Package baru dicek dulu di `composer.json`/`package.json` sebelum ditambahkan, dan diberitahukan ke user.
-- [ ] `UserSeeder` tersedia dan menghasilkan 3 akun demo (customer, staff, admin) lewat `DatabaseSeeder`.
+- [x] Variabel lokal PHP & JS pakai bahasa Indonesia, class/route/table tetap bahasa Inggris.
+- [x] Perubahan status booking/pembayaran lewat method khusus di model/service, bukan set kolom langsung.
+- [x] Bukti pembayaran tersimpan di `storage/app/private`, tidak ada akses publik langsung.
+- [x] Otorisasi dicek lewat Policy, bukan hanya `if` role di controller.
+- [x] Validasi input lewat Form Request.
+- [x] Package baru dicek dulu di `composer.json`/`package.json` sebelum ditambahkan, dan diberitahukan ke user.
+- [x] `UserSeeder` tersedia dan menghasilkan 3 akun demo (customer, staff, admin) lewat `DatabaseSeeder`.

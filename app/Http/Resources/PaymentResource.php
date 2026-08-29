@@ -22,6 +22,7 @@ class PaymentResource extends JsonResource
             'has_bukti' => ! empty($this->bukti_pembayaran),
             'verified_by' => $this->verified_by,
             'waktu_verifikasi' => $this->waktu_verifikasi?->format('Y-m-d H:i'),
+            'booking' => new BookingResource($this->whenLoaded('booking')),
             'verifier' => new UserResource($this->whenLoaded('verifier')),
         ];
     }

@@ -16,7 +16,7 @@ class TicketController extends Controller
      */
     public function show(Booking $booking)
     {
-        Gate::authorize('view', [Booking::class, $booking]);
+        Gate::authorize('view', $booking);
 
         $booking->load([
             'schedule.stationAsal',
@@ -24,6 +24,7 @@ class TicketController extends Controller
             'schedule.train',
             'passengers',
             'bookingSeats.seat.coach',
+            'bookingSeats.passenger',
             'payment',
             'user',
         ]);
@@ -38,7 +39,7 @@ class TicketController extends Controller
      */
     public function download(Booking $booking)
     {
-        Gate::authorize('download', [Booking::class, $booking]);
+        Gate::authorize('view', $booking);
 
         $booking->load([
             'schedule.stationAsal',
@@ -46,6 +47,7 @@ class TicketController extends Controller
             'schedule.train',
             'passengers',
             'bookingSeats.seat.coach',
+            'bookingSeats.passenger',
             'payment',
             'user',
         ]);

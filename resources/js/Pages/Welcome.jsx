@@ -1,11 +1,20 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useId } from 'react';
+import { Calendar, Clock, Timer, ArrowDown, ArrowRight, Train, ShieldCheck, Zap, Sparkles, Users } from 'lucide-react';
 
-export default function Welcome({ auth, stations, laravelVersion, phpVersion }) {
+const getTanggalHariIni = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+export default function Welcome({ auth, stations, popularSchedules = [], laravelVersion, phpVersion }) {
     const daftarStasiun = stations?.data || stations || [];
 
     // State untuk form pencarian tiket di hero
-    const tanggalHariIni = new Date().toISOString().split('T')[0];
+    const tanggalHariIni = getTanggalHariIni();
     const [stasiunAsal, setStasiunAsal] = useState(daftarStasiun[0]?.id || '');
     const [stasiunTujuan, setStasiunTujuan] = useState(daftarStasiun[2]?.id || '');
     const [tanggalKeberangkatan, setTanggalKeberangkatan] = useState(tanggalHariIni);
@@ -43,7 +52,9 @@ export default function Welcome({ auth, stations, laravelVersion, phpVersion }) 
             kereta: 'Argo Parahyangan',
             waktu: '3 Jam',
             harga: 'Rp 150.000',
-            kelas: 'Eksekutif / Ekonomi',
+            kelas: 'Ekonomi / Bisnis / Eksekutif',
+            tanggal: '30 Agustus 2026',
+            jam: '08:00 WIB',
         },
         {
             asal: 'Gambir (Jakarta)',
@@ -51,7 +62,9 @@ export default function Welcome({ auth, stations, laravelVersion, phpVersion }) 
             kereta: 'Taksaka',
             waktu: '7 Jam 15 Menit',
             harga: 'Rp 350.000',
-            kelas: 'Eksekutif',
+            kelas: 'Ekonomi / Bisnis / Eksekutif',
+            tanggal: '30 Agustus 2026',
+            jam: '09:30 WIB',
         },
         {
             asal: 'Gambir (Jakarta)',
@@ -59,7 +72,9 @@ export default function Welcome({ auth, stations, laravelVersion, phpVersion }) 
             kereta: 'Argo Bromo Anggrek',
             waktu: '9 Jam 10 Menit',
             harga: 'Rp 500.000',
-            kelas: 'Eksekutif',
+            kelas: 'Ekonomi / Bisnis / Eksekutif',
+            tanggal: '31 Agustus 2026',
+            jam: '08:20 WIB',
         },
         {
             asal: 'Bandung',
@@ -67,7 +82,9 @@ export default function Welcome({ auth, stations, laravelVersion, phpVersion }) 
             kereta: 'Argo Parahyangan',
             waktu: '3 Jam',
             harga: 'Rp 150.000',
-            kelas: 'Eksekutif / Bisnis',
+            kelas: 'Ekonomi / Bisnis / Eksekutif',
+            tanggal: '30 Agustus 2026',
+            jam: '14:00 WIB',
         },
     ];
 
@@ -478,52 +495,91 @@ export default function Welcome({ auth, stations, laravelVersion, phpVersion }) 
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {rutePopuler.map((rute, idx) => (
-                                <div
-                                    key={idx}
-                                    className="group bg-slate-50 hover:bg-white rounded-2xl p-5 border border-slate-200 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-900/5 transition duration-300 flex flex-col justify-between"
-                                >
-                                    <div>
-                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-                                            <span className="font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
-                                                {rute.kereta}
-                                            </span>
-                                            <span>⏱️ {rute.waktu}</span>
-                                        </div>
+                            {(popularSchedules && popularSchedules.length > 0 ? popularSchedules : rutePopuler).map((rute, idx) => {
+                                const sisaKursi = rute.kursi_tersedia !== undefined ? rute.kursi_tersedia : 30;
 
-                                        <div className="space-y-1 mb-4">
-                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                                {rute.asal}
-                                            </div>
-                                            <div className="pl-1 text-slate-400 text-xs">↓</div>
-                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                                                <span className="w-2 h-2 rounded-full bg-slate-800"></span>
-                                                {rute.tujuan}
-                                            </div>
-                                        </div>
-
-                                        <div className="text-xs text-slate-500 mb-4">
-                                            Kelas: <span className="font-medium text-slate-700">{rute.kelas}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="group bg-slate-50 hover:bg-white rounded-2xl p-5 border border-slate-200 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-900/5 transition duration-300 flex flex-col justify-between"
+                                    >
                                         <div>
-                                            <span className="text-[10px] text-slate-400 block">Mulai dari</span>
-                                            <span className="text-base font-extrabold text-emerald-600">
-                                                {rute.harga}
-                                            </span>
+                                            <div className="flex items-center justify-between text-xs text-slate-500 mb-2.5">
+                                                <span className="font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
+                                                    {rute.kereta}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Timer className="w-3.5 h-3.5 text-slate-400" />
+                                                    {rute.waktu}
+                                                </span>
+                                            </div>
+
+                                            {/* Keterangan Tanggal & Jam Jadwal */}
+                                            <div className="flex items-center justify-between text-[11px] bg-emerald-50/80 border border-emerald-200/70 px-2.5 py-1.5 rounded-xl text-emerald-900 mb-3">
+                                                <span className="font-bold flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                    {rute.tanggal}
+                                                </span>
+                                                <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                                                    <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                    {rute.jam}
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-1 mb-3">
+                                                <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    {rute.asal}
+                                                </div>
+                                                <div className="pl-0.5 text-slate-400 py-0.5">
+                                                    <ArrowDown className="w-3.5 h-3.5 text-slate-400" />
+                                                </div>
+                                                <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-800"></span>
+                                                    {rute.tujuan}
+                                                </div>
+                                            </div>
+
+                                            {/* Keterangan Jumlah Kursi Tersedia */}
+                                            <div className="flex items-center justify-between text-xs bg-slate-100/90 border border-slate-200/80 px-2.5 py-1.5 rounded-xl mb-3">
+                                                <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+                                                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                                                    Sisa Kursi:
+                                                </span>
+                                                <span className={`inline-flex items-center gap-1.5 font-bold text-xs px-2 py-0.5 rounded-lg border ${
+                                                    sisaKursi > 0 
+                                                        ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
+                                                        : 'text-rose-700 bg-rose-50 border-rose-200'
+                                                }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${
+                                                        sisaKursi > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                                                    }`}></span>
+                                                    {sisaKursi > 0 ? `${sisaKursi} Kursi Tersedia` : 'Penuh'}
+                                                </span>
+                                            </div>
+
+                                            <div className="text-xs text-slate-500 mb-4">
+                                                Kelas: <span className="font-medium text-slate-700">{rute.kelas}</span>
+                                            </div>
                                         </div>
-                                        <a
-                                            href="#cari-tiket"
-                                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition"
-                                        >
-                                            Pesan
-                                        </a>
+
+                                        <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 block">Mulai dari</span>
+                                                <span className="text-base font-extrabold text-emerald-600">
+                                                    {rute.harga}
+                                                </span>
+                                            </div>
+                                            <Link
+                                                href={route('login')}
+                                                className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs hover:shadow active:scale-95 transition"
+                                            >
+                                                Pesan
+                                            </Link>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
