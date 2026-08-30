@@ -83,12 +83,28 @@ flowchart LR
     Admin --> UC_ViewProof
     Admin --> UC_Export
 
-    %% Relations
-    UC_Verify -.->|"include"| UC_ViewProof
-    UC_Ticket -.->|"extend (setelah lunas)"| UC_Seat
+    %% Relations (Include & Extend)
+    UC_Verify -.->|"<<include>>"| UC_ViewProof
+    UC_Seat -.->|"<<include>>"| UC_Search
+    UC_Ticket -.->|"<<extend>> (Syarat: Lunas/PAID)"| UC_Hist
+    UC_Cancel -.->|"<<extend>> (Syarat: Status PENDING)"| UC_Hist
 
     classDef uc fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a;
 ```
+
+### Keterangan Relasi Diagram (`<<include>>` & `<<extend>>`)
+
+Dalam Use Case Diagram di atas, terdapat dua jenis relasi antarfungsionalitas:
+
+1. **`<<include>>` (Relasi Wajib)**: Use case sumber secara mutlak menyertakan/memanggil fungsionalitas use case target agar prosesnya dapat diselesaikan.
+2. **`<<extend>>` (Relasi Bersyarat / Opsional)**: Use case target memperluas use case dasar hanya ketika kondisi tertentu (*extension point*) terpenuhi.
+
+| Jenis Relasi | Use Case Sumber (Asal) | Use Case Target (Tujuan) | Titik Ekstensi / Syarat Kondisi | Penjelasan Detail |
+|---|---|---|---|---|
+| **`<<include>>`** | Verifikasi Pembayaran (`UC_Verify`) | Lihat Berkas Bukti Transfer (`UC_ViewProof`) | *Selalu dijalankan* | Staff/Admin wajib membuka dan melihat file bukti transfer sebelum mengambil keputusan verifikasi (Terima/Tolak). |
+| **`<<include>>`** | Pilih Kursi & Booking Tiket (`UC_Seat`) | Pencarian & Cek Jadwal Kereta (`UC_Search`) | *Selalu dijalankan* | Pemilihan gerbong dan kursi membutuhkan data jadwal perjalanan kereta yang telah dicari terlebih dahulu. |
+| **`<<extend>>`** | Lihat Riwayat & Detail Booking (`UC_Hist`) | Lihat & Unduh E-Ticket PDF / QR (`UC_Ticket`) | Status Pembayaran = `PAID` (Lunas) | E-Ticket beserta QR Code dan opsi unduh PDF hanya akan muncul/dapat diakses jika pembayaran sudah diverifikasi lunas oleh staff. |
+| **`<<extend>>`** | Lihat Riwayat & Detail Booking (`UC_Hist`) | Batalkan Booking (`UC_Cancel`) | Status Booking = `PENDING` (Belum Bayar) | Opsi pembatalan reservasi hanya tersedia selama pesanan belum dibayar dan belum melewati batas kedaluwarsa. |
 
 ---
 
