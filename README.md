@@ -20,9 +20,10 @@ flowchart LR
 
     %% System Boundary
     subgraph GoRailSystem ["Sistem GoRail"]
-        %% Guest Use Cases
+        %% Public & Auth Use Cases
         UC_Search(["Pencarian & Cek Jadwal Kereta"]):::uc
-        UC_Auth(["Registrasi & Login Akun"]):::uc
+        UC_Register(["Registrasi Akun"]):::uc
+        UC_Login(["Login Sistem"]):::uc
 
         %% Customer Use Cases
         UC_Profile(["Kelola Profil Pengguna"]):::uc
@@ -49,9 +50,11 @@ flowchart LR
 
     %% Guest Connections
     Guest --> UC_Search
-    Guest --> UC_Auth
+    Guest --> UC_Register
+    Guest --> UC_Login
 
     %% Customer Connections
+    Customer --> UC_Login
     Customer --> UC_Profile
     Customer --> UC_Search
     Customer --> UC_Seat
@@ -61,12 +64,14 @@ flowchart LR
     Customer --> UC_Ticket
 
     %% Staff Connections
+    Staff --> UC_Login
     Staff --> UC_StaffDash
     Staff --> UC_Verify
     Staff --> UC_ViewProof
     Staff --> UC_Export
 
     %% Admin Connections
+    Admin --> UC_Login
     Admin --> UC_ManageUsers
     Admin --> UC_ManageStations
     Admin --> UC_ManageTrains
