@@ -10,111 +10,79 @@ Berikut adalah representasi Use Case Diagram sistem GoRail yang mencakup interak
 
 ```mermaid
 flowchart LR
-    %% ==========================================
-    %% AKTOR SEBELAH KIRI
-    %% ==========================================
-    Guest["Guest / Pengunjung"]
-    Customer["Customer"]
-
-    %% ==========================================
-    %% SYSTEM BOUNDARY (GORAIL)
-    %% ==========================================
-    subgraph GoRail ["GoRail"]
-        %% Autentikasi & Akun
-        UC_Login(["Login"]):::usecase
-        UC_Register(["Registrasi Akun"]):::usecase
-        UC_Profil(["Kelola Profil"]):::usecase
-        UC_EditProfil(["Edit Profil & Password"]):::usecase
-
-        %% Pencarian & Jadwal
-        UC_Search(["Pencarian Jadwal"]):::usecase
-        UC_DetailJadwal(["Lihat Detail & Ketersediaan Kursi"]):::usecase
-
-        %% Reservasi Tiket
-        UC_Booking(["Pemesanan Tiket Kereta"]):::usecase
-        UC_PilihKursi(["Pilih Gerbong & Kursi"]):::usecase
-        UC_Riwayat(["Lihat Riwayat Booking"]):::usecase
-        UC_Batal(["Batalkan Booking"]):::usecase
-        UC_UploadBayar(["Upload Bukti Pembayaran"]):::usecase
-        UC_ETicket(["Lihat E-Ticket & Download PDF"]):::usecase
-
-        %% Operasional Staff
-        UC_Dashboard(["Dashboard Operasional"]):::usecase
-        UC_VerifBayar(["Verifikasi Pembayaran"]):::usecase
-        UC_LihatBukti(["Lihat Bukti Transfer"]):::usecase
-        UC_ExportCSV(["Export Laporan Booking (CSV)"]):::usecase
-
-        %% Master Data Admin
-        UC_MngUser(["Manajemen Pengguna & Role"]):::usecase
-        UC_MngStasiun(["Manajemen Data Stasiun"]):::usecase
-        UC_ImportStasiun(["Import Massal Stasiun (CSV)"]):::usecase
-        UC_MngKereta(["Manajemen Kereta Api"]):::usecase
-        UC_MngGerbong(["Manajemen Gerbong & Kelas"]):::usecase
-        UC_MngKursi(["Manajemen Kursi"]):::usecase
-        UC_MngJadwal(["Manajemen Jadwal & Tarif"]):::usecase
-
-        %% Relasi Include & Extend Antar Use Case
-        UC_Register -.->|"<<Extend>>"| UC_Login
-        UC_Profil -.->|"<<Extend>>"| UC_EditProfil
-        UC_Search -.->|"<<Include>>"| UC_DetailJadwal
-        
-        UC_Booking -.->|"<<Include>>"| UC_PilihKursi
-        UC_Booking -.->|"<<Include>>"| UC_Login
-        UC_Booking -.->|"<<Extend>>"| UC_UploadBayar
-        UC_Booking -.->|"<<Extend>>"| UC_ETicket
-        UC_Riwayat -.->|"<<Extend>>"| UC_Batal
-
-        UC_VerifBayar -.->|"<<Include>>"| UC_LihatBukti
-        UC_VerifBayar -.->|"<<Include>>"| UC_Login
-
-        UC_MngStasiun -.->|"<<Extend>>"| UC_ImportStasiun
-        UC_MngUser -.->|"<<Include>>"| UC_Login
-        UC_MngKereta -.->|"<<Include>>"| UC_Login
-        UC_MngJadwal -.->|"<<Include>>"| UC_Login
+    %% Actors
+    subgraph Aktor [Aktor Sistem]
+        Guest["Guest / Pengunjung"]
+        Customer["Customer"]
+        Staff["Staff Operasional"]
+        Admin["Administrator"]
     end
 
-    %% ==========================================
-    %% AKTOR SEBELAH KANAN
-    %% ==========================================
-    Staff["Staff Operasional"]
-    Admin["Administrator"]
+    %% System Boundary
+    subgraph GoRailSystem ["Sistem GoRail"]
+        %% Guest Use Cases
+        UC_Search(["Pencarian & Cek Jadwal Kereta"]):::uc
+        UC_Auth(["Registrasi & Login Akun"]):::uc
 
-    %% ==========================================
-    %% RELASI AKTOR KIRI KE USE CASE
-    %% ==========================================
+        %% Customer Use Cases
+        UC_Profile(["Kelola Profil Pengguna"]):::uc
+        UC_Seat(["Pilih Kursi & Booking Tiket"]):::uc
+        UC_Hist(["Lihat Riwayat & Detail Booking"]):::uc
+        UC_Cancel(["Batalkan Booking"]):::uc
+        UC_UploadPay(["Upload Bukti Pembayaran"]):::uc
+        UC_Ticket(["Lihat & Unduh E-Ticket PDF / QR Code"]):::uc
+
+        %% Staff Use Cases
+        UC_StaffDash(["Lihat Dashboard Operasional"]):::uc
+        UC_Verify(["Verifikasi Pembayaran"]):::uc
+        UC_ViewProof(["Lihat Berkas Bukti Transfer"]):::uc
+        UC_Export(["Export Laporan Booking CSV"]):::uc
+
+        %% Admin Master Data Use Cases
+        UC_ManageUsers(["Kelola Pengguna & Role"]):::uc
+        UC_ManageStations(["Kelola Stasiun & Import CSV"]):::uc
+        UC_ManageTrains(["Kelola Master Kereta Api"]):::uc
+        UC_ManageCoaches(["Kelola Master Gerbong & Kelas"]):::uc
+        UC_ManageSeats(["Kelola Master Kursi"]):::uc
+        UC_ManageSchedules(["Kelola Jadwal & Tarif"]):::uc
+    end
+
+    %% Guest Connections
     Guest --> UC_Search
-    Guest --> UC_Register
-    Guest --> UC_Login
+    Guest --> UC_Auth
 
-    Customer --> UC_Profil
+    %% Customer Connections
+    Customer --> UC_Profile
     Customer --> UC_Search
-    Customer --> UC_Booking
-    Customer --> UC_Riwayat
-    Customer --> UC_UploadBayar
-    Customer --> UC_ETicket
+    Customer --> UC_Seat
+    Customer --> UC_Hist
+    Customer --> UC_Cancel
+    Customer --> UC_UploadPay
+    Customer --> UC_Ticket
 
-    %% ==========================================
-    %% RELASI AKTOR KANAN KE USE CASE
-    %% ==========================================
-    Staff --> UC_Dashboard
-    Staff --> UC_VerifBayar
-    Staff --> UC_ExportCSV
+    %% Staff Connections
+    Staff --> UC_StaffDash
+    Staff --> UC_Verify
+    Staff --> UC_ViewProof
+    Staff --> UC_Export
 
-    Admin --> UC_Dashboard
-    Admin --> UC_VerifBayar
-    Admin --> UC_ExportCSV
-    Admin --> UC_MngUser
-    Admin --> UC_MngStasiun
-    Admin --> UC_MngKereta
-    Admin --> UC_MngGerbong
-    Admin --> UC_MngKursi
-    Admin --> UC_MngJadwal
+    %% Admin Connections
+    Admin --> UC_ManageUsers
+    Admin --> UC_ManageStations
+    Admin --> UC_ManageTrains
+    Admin --> UC_ManageCoaches
+    Admin --> UC_ManageSeats
+    Admin --> UC_ManageSchedules
+    Admin --> UC_StaffDash
+    Admin --> UC_Verify
+    Admin --> UC_ViewProof
+    Admin --> UC_Export
 
-    %% ==========================================
-    %% STYLING UML
-    %% ==========================================
-    classDef usecase fill:#ffffff,stroke:#1e293b,stroke-width:1.5px,color:#0f172a;
-    classDef default fill:#ffffff,stroke:#1e293b,stroke-width:1.5px,color:#0f172a;
+    %% Relations
+    UC_Verify -.->|"include"| UC_ViewProof
+    UC_Ticket -.->|"extend (setelah lunas)"| UC_Seat
+
+    classDef uc fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a;
 ```
 
 ---
