@@ -84,10 +84,10 @@ flowchart LR
     Admin --> UC_Export
 
     %% Relations (Include & Extend)
-    UC_Verify -.->|"<<include>>"| UC_ViewProof
-    UC_Seat -.->|"<<include>>"| UC_Search
-    UC_Ticket -.->|"<<extend>> (Syarat: Lunas/PAID)"| UC_Hist
-    UC_Cancel -.->|"<<extend>> (Syarat: Status PENDING)"| UC_Hist
+    UC_Verify -.->|"«include»"| UC_ViewProof
+    UC_Seat -.->|"«include»"| UC_Search
+    UC_Ticket -.->|"«extend» (Syarat: Lunas/PAID)"| UC_Hist
+    UC_Cancel -.->|"«extend» (Syarat: Status PENDING)"| UC_Hist
 
     classDef uc fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a;
 ```
