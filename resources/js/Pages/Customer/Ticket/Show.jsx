@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
-export default function TicketShow({ booking }) {
+export default function TicketShow({ booking, qrCode }) {
     const dataBooking = booking?.data || booking || {};
     const daftarBookingSeats = dataBooking.booking_seats || dataBooking.bookingSeats || [];
     const daftarPenumpang = dataBooking.passengers || [];
@@ -185,7 +185,7 @@ export default function TicketShow({ booking }) {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {daftarBookingSeats.length > 0 ? (
-                                            daftarBookingSeats.map((bs, index) => {
+                                             daftarBookingSeats.map((bs, index) => {
                                                 const penumpang = bs.passenger || daftarPenumpang[index] || {};
                                                 const kursi = bs.seat || {};
                                                 const gerbong = kursi.coach || {};
@@ -230,19 +230,44 @@ export default function TicketShow({ booking }) {
                             </div>
                         </div>
 
-                        {/* Petunjuk / Disclaimer */}
-                        <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900 space-y-1.5">
-                            <p className="font-bold flex items-center gap-1.5">
-                                <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Ketentuan Boarding:
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 pl-1 text-amber-800/90">
-                                <li>Tunjukkan e-ticket ini atau PDF boarding pass beserta kartu identitas asli saat proses boarding di stasiun.</li>
-                                <li>Harap tiba di stasiun keberangkatan minimal 30 menit sebelum jadwal keberangkatan kereta.</li>
-                                <li>Pintu boarding ditutup 5 menit sebelum waktu keberangkatan kereta api.</li>
-                            </ul>
+                        {/* ─── Section QR Code & Ketentuan Boarding ─── */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center pt-2">
+                            {/* QR Code Card */}
+                            {qrCode && (
+                                <div className="md:col-span-4 flex flex-col items-center justify-center p-5 bg-gradient-to-b from-slate-50 to-emerald-50/40 rounded-2xl border border-emerald-200/80 text-center shadow-sm">
+                                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm inline-block">
+                                        <div
+                                            className="w-36 h-36 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+                                            dangerouslySetInnerHTML={{ __html: qrCode }}
+                                        />
+                                    </div>
+                                    <p className="mt-3 text-sm font-mono font-black text-slate-900 tracking-wider">
+                                        {dataBooking.kode_booking}
+                                    </p>
+                                    <p className="text-[11px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+                                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                        </svg>
+                                        Pindai saat Boarding di Stasiun
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Petunjuk / Disclaimer */}
+                            <div className={`${qrCode ? 'md:col-span-8' : 'md:col-span-12'} bg-amber-50/80 border border-amber-200 rounded-2xl p-5 text-xs text-amber-950 space-y-2.5 h-full flex flex-col justify-center`}>
+                                <p className="font-bold text-amber-900 flex items-center gap-2 text-sm">
+                                    <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Ketentuan & Syarat Boarding
+                                </p>
+                                <ul className="list-disc list-inside space-y-1.5 pl-0.5 text-amber-900/90 leading-relaxed">
+                                    <li>Tunjukkan QR code e-ticket ini atau PDF boarding pass beserta kartu identitas asli (KTP/SIM/Paspor) saat proses boarding di stasiun.</li>
+                                    <li>Harap tiba di stasiun keberangkatan minimal 30 menit sebelum jadwal keberangkatan kereta.</li>
+                                    <li>Pintu boarding peron ditutup 5 menit sebelum waktu keberangkatan kereta api.</li>
+                                    <li>Tiket yang telah terbit tunduk pada syarat dan ketentuan operasional PT GoRail Indonesia.</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>

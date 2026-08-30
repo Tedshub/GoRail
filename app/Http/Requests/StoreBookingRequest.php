@@ -29,8 +29,51 @@ class StoreBookingRequest extends FormRequest
             'penumpang' => ['required', 'array', 'min:1'],
             'penumpang.*.nama_penumpang' => ['required', 'string', 'max:255'],
             'penumpang.*.nomor_identitas' => ['required', 'string', 'max:50'],
-            'penumpang.*.jenis_identitas' => ['required', 'string', 'in:KTP,SIM,Paspor'],
+            'penumpang.*.jenis_identitas' => ['required', 'string', 'in:KTP,SIM,Paspor,ktp,sim,paspor,PASPOR'],
         ];
+    }
+
+    /**
+     * Custom validation rules for conditional passenger ID formats.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $penumpangList = $this->input('penumpang', []);
+            if (!is_array($penumpangList)) {
+                return;
+            }
+
+            foreach ($penumpangList as $index => $penumpang) {
+                $nomorUrut = $index + 1;
+                $nama = trim($penumpang['nama_penumpang'] ?? '');
+                $jenis = strtoupper($penumpang['jenis_identitas'] ?? '');
+                $nomor = trim($penumpang['nomor_identitas'] ?? '');
+
+                if (empty($nama)) {
+                    $validator->errors()->add(
+                        "penumpang.{$index}.nama_penumpang",
+                        "Nama lengkap penumpang ke-{$nomorUrut} wajib diisi."
+                    );
+                }
+
+                if (in_array($jenis, ['KTP', 'SIM'])) {
+                    if (!preg_match('/^[0-9]{16}$/', $nomor)) {
+                        $validator->errors()->add(
+                            "penumpang.{$index}.nomor_identitas",
+                            "Nomor identitas ({$jenis}) penumpang ke-{$nomorUrut} harus terdiri dari 16 digit angka."
+                        );
+                    }
+                } elseif ($jenis === 'PASPOR') {
+                    if (!preg_match('/^[A-Za-z0-9]{8,9}$/', $nomor)) {
+                        $validator->errors()->add(
+                            "penumpang.{$index}.nomor_identitas",
+                            "Nomor identitas (Paspor) penumpang ke-{$nomorUrut} harus terdiri dari 8 sampai 9 karakter kombinasi huruf dan angka."
+                        );
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -49,6 +92,10 @@ class StoreBookingRequest extends FormRequest
             'seat_ids.min' => 'Minimal pilih 1 kursi.',
             'penumpang.required' => 'Data penumpang harus diisi.',
             'penumpang.min' => 'Minimal 1 penumpang.',
+            'penumpang.*.nama_penumpang.required' => 'Nama lengkap penumpang wajib diisi.',
+            'penumpang.*.nomor_identitas.required' => 'Nomor identitas penumpang wajib diisi.',
+            'penumpang.*.jenis_identitas.required' => 'Jenis identitas penumpang wajib dipilih.',
+            'penumpang.*.jenis_identitas.in' => 'Jenis identitas harus KTP, SIM, atau Paspor.',
         ];
     }
 }

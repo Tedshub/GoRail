@@ -29,8 +29,12 @@ class TicketController extends Controller
             'user',
         ]);
 
+        // Generate QR Code SVG berisi kode booking
+        $qrCodeSvg = (string) QrCode::size(150)->margin(1)->generate($booking->kode_booking);
+
         return Inertia::render('Customer/Ticket/Show', [
             'booking' => new BookingResource($booking),
+            'qrCode' => $qrCodeSvg,
         ]);
     }
 

@@ -106,14 +106,90 @@ export default function ScheduleDetail({ schedule, denah_kursi = [], tanggal }) 
         });
     };
 
+    const [formSubmitted, setFormSubmitted] = useState(false);
+
+    // Fungsi validasi penumpang real-time
+    const cekValidasiPenumpang = (penumpang) => {
+        const nama = (penumpang?.nama_penumpang || '').trim();
+        const namaValid = nama.length > 0;
+        const jenis = (penumpang?.jenis_identitas || 'KTP').toUpperCase();
+        const nomor = (penumpang?.nomor_identitas || '').trim();
+
+        let nomorValid = false;
+        let pesanErrorNomor = '';
+
+        if (jenis === 'KTP' || jenis === 'SIM') {
+            nomorValid = /^[0-9]{16}$/.test(nomor);
+            if (nomor.length > 0 && !nomorValid) {
+                pesanErrorNomor = `Harus tepat 16 digit angka (saat ini: ${nomor.length}/16 digit)`;
+            } else if (nomor.length === 0) {
+                pesanErrorNomor = `Nomor ${penumpang?.jenis_identitas || 'KTP'} wajib diisi (16 digit angka).`;
+            }
+        } else if (jenis === 'PASPOR') {
+            nomorValid = /^[A-Za-z0-9]{8,9}$/.test(nomor);
+            if (nomor.length > 0 && !nomorValid) {
+                pesanErrorNomor = `Harus 8-9 karakter huruf & angka (saat ini: ${nomor.length} karakter)`;
+            } else if (nomor.length === 0) {
+                pesanErrorNomor = 'Nomor Paspor wajib diisi (8-9 karakter alfanumerik).';
+            }
+        }
+
+        return {
+            namaValid,
+            nomorValid,
+            pesanErrorNomor,
+            semuaValid: namaValid && nomorValid,
+        };
+    };
+
+    const semuaPenumpangValid = data.penumpang.length > 0 && data.penumpang.every((p) => cekValidasiPenumpang(p).semuaValid);
+
     const handleUbahPenumpang = (indeks, field, nilai) => {
         const penumpangBaru = [...data.penumpang];
-        penumpangBaru[indeks] = { ...penumpangBaru[indeks], [field]: nilai };
+        let nilaiFormat = nilai;
+
+        if (field === 'jenis_identitas') {
+            const jenisBaru = (nilai || 'KTP').toUpperCase();
+            const nomorLama = penumpangBaru[indeks]?.nomor_identitas || '';
+            if (jenisBaru === 'KTP' || jenisBaru === 'SIM') {
+                nilaiFormat = nilai;
+                penumpangBaru[indeks] = {
+                    ...penumpangBaru[indeks],
+                    jenis_identitas: nilai,
+                    nomor_identitas: nomorLama.replace(/\D/g, '').slice(0, 16),
+                };
+            } else if (jenisBaru === 'PASPOR') {
+                penumpangBaru[indeks] = {
+                    ...penumpangBaru[indeks],
+                    jenis_identitas: nilai,
+                    nomor_identitas: nomorLama.replace(/[^A-Za-z0-9]/g, '').slice(0, 9).toUpperCase(),
+                };
+            }
+            setData('penumpang', penumpangBaru);
+            return;
+        }
+
+        if (field === 'nomor_identitas') {
+            const jenis = (penumpangBaru[indeks]?.jenis_identitas || 'KTP').toUpperCase();
+            if (jenis === 'KTP' || jenis === 'SIM') {
+                nilaiFormat = nilai.replace(/\D/g, '').slice(0, 16);
+            } else if (jenis === 'PASPOR') {
+                nilaiFormat = nilai.replace(/[^A-Za-z0-9]/g, '').slice(0, 9).toUpperCase();
+            }
+        }
+
+        penumpangBaru[indeks] = { ...penumpangBaru[indeks], [field]: nilaiFormat };
         setData('penumpang', penumpangBaru);
     };
 
     const handleSubmitBooking = (e) => {
         e.preventDefault();
+        setFormSubmitted(true);
+
+        if (!semuaPenumpangValid) {
+            return;
+        }
+
         post(route('bookings.store'));
     };
 
@@ -384,15 +460,30 @@ export default function ScheduleDetail({ schedule, denah_kursi = [], tanggal }) 
                             {data.penumpang.map((penumpang, indeks) => {
                                 const kursiId = kursiDipilih[indeks];
                                 const infoKursi = mapKursi[kursiId] || {};
+                                const val = cekValidasiPenumpang(penumpang);
+                                const jenis = (penumpang.jenis_identitas || 'KTP').toUpperCase();
+                                const isPaspor = jenis === 'PASPOR';
 
                                 return (
-                                    <div key={indeks} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50/50">
+                                    <div key={indeks} className="border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 bg-slate-50/50">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
+                                                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shadow-2xs">
                                                     {indeks + 1}
                                                 </span>
-                                                <span className="text-sm font-bold text-slate-700">Penumpang {indeks + 1}</span>
+                                                <span className="text-sm font-bold text-slate-800">Penumpang {indeks + 1}</span>
+                                                {val.semuaValid ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                        <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Data Lengkap
+                                                    </span>
+                                                ) : formSubmitted ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                                        Belum Lengkap
+                                                    </span>
+                                                ) : null}
                                             </div>
                                             {infoKursi.nomor_kursi && (
                                                 <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg">
@@ -401,45 +492,91 @@ export default function ScheduleDetail({ schedule, denah_kursi = [], tanggal }) 
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                                            {/* Nama Lengkap */}
                                             <div>
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">Nama Lengkap</label>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                                    Nama Lengkap <span className="text-rose-500">*</span>
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={penumpang.nama_penumpang}
                                                     onChange={(e) => handleUbahPenumpang(indeks, 'nama_penumpang', e.target.value)}
-                                                    className="w-full rounded-xl border-slate-300 bg-white py-2 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 focus:ring-4 transition"
-                                                    placeholder="Nama sesuai identitas"
+                                                    className={`w-full rounded-xl bg-white py-2 px-3 text-sm focus:ring-4 transition ${
+                                                        formSubmitted && !val.namaValid
+                                                            ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20'
+                                                            : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                                    }`}
+                                                    placeholder="Nama sesuai KTP/Paspor"
                                                     required
                                                 />
+                                                {formSubmitted && !val.namaValid && (
+                                                    <p className="text-xs text-rose-500 mt-1 font-medium">Nama lengkap wajib diisi.</p>
+                                                )}
                                                 {errors[`penumpang.${indeks}.nama_penumpang`] && (
-                                                    <p className="text-xs text-rose-500 mt-1">{errors[`penumpang.${indeks}.nama_penumpang`]}</p>
+                                                    <p className="text-xs text-rose-500 mt-1 font-medium">{errors[`penumpang.${indeks}.nama_penumpang`]}</p>
                                                 )}
                                             </div>
+
+                                            {/* Jenis Identitas */}
                                             <div>
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">Jenis Identitas</label>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                                    Jenis Identitas <span className="text-rose-500">*</span>
+                                                </label>
                                                 <select
                                                     value={penumpang.jenis_identitas}
                                                     onChange={(e) => handleUbahPenumpang(indeks, 'jenis_identitas', e.target.value)}
-                                                    className="w-full rounded-xl border-slate-300 bg-white py-2 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 focus:ring-4 transition"
+                                                    className="w-full rounded-xl border-slate-300 bg-white py-2 px-3 text-sm font-medium text-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20 focus:ring-4 transition"
                                                 >
-                                                    <option value="KTP">KTP</option>
-                                                    <option value="SIM">SIM</option>
-                                                    <option value="Paspor">Paspor</option>
+                                                    <option value="KTP">KTP (16 Digit)</option>
+                                                    <option value="SIM">SIM (16 Digit)</option>
+                                                    <option value="Paspor">Paspor (8-9 Karakter)</option>
                                                 </select>
                                             </div>
+
+                                            {/* Nomor Identitas */}
                                             <div>
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">Nomor Identitas</label>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="block text-xs font-bold text-slate-700">
+                                                        Nomor Identitas <span className="text-rose-500">*</span>
+                                                    </label>
+                                                    <span className={`text-[11px] font-mono font-semibold ${val.nomorValid ? 'text-emerald-700' : 'text-slate-400'}`}>
+                                                        {isPaspor
+                                                            ? `${penumpang.nomor_identitas?.length || 0}/9 char`
+                                                            : `${penumpang.nomor_identitas?.length || 0}/16 digit`
+                                                        }
+                                                    </span>
+                                                </div>
                                                 <input
                                                     type="text"
                                                     value={penumpang.nomor_identitas}
+                                                    maxLength={isPaspor ? 9 : 16}
                                                     onChange={(e) => handleUbahPenumpang(indeks, 'nomor_identitas', e.target.value)}
-                                                    className="w-full rounded-xl border-slate-300 bg-white py-2 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 focus:ring-4 transition"
-                                                    placeholder="Nomor KTP / SIM / Paspor"
+                                                    className={`w-full rounded-xl bg-white py-2 px-3 text-sm font-mono focus:ring-4 transition ${
+                                                        (formSubmitted || (penumpang.nomor_identitas && penumpang.nomor_identitas.length > 0)) && !val.nomorValid
+                                                            ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20'
+                                                            : val.nomorValid
+                                                            ? 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                                            : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                                    }`}
+                                                    placeholder={isPaspor ? 'Contoh: A1234567 (8-9 char)' : '16 digit angka'}
                                                     required
                                                 />
-                                                {errors[`penumpang.${indeks}.nomor_identitas`] && (
-                                                    <p className="text-xs text-rose-500 mt-1">{errors[`penumpang.${indeks}.nomor_identitas`]}</p>
+                                                {errors[`penumpang.${indeks}.nomor_identitas`] ? (
+                                                    <p className="text-xs text-rose-500 mt-1 font-medium">{errors[`penumpang.${indeks}.nomor_identitas`]}</p>
+                                                ) : (formSubmitted || (penumpang.nomor_identitas && penumpang.nomor_identitas.length > 0)) && !val.nomorValid ? (
+                                                    <p className="text-xs text-rose-500 mt-1 font-medium">{val.pesanErrorNomor}</p>
+                                                ) : val.nomorValid ? (
+                                                    <p className="text-[11px] text-emerald-600 mt-1 font-medium flex items-center gap-1">
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Nomor identitas valid
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-[11px] text-slate-400 mt-1">
+                                                        {isPaspor ? '8-9 karakter kombinasi huruf & angka' : 'Wajib 16 digit angka'}
+                                                    </p>
                                                 )}
                                             </div>
                                         </div>
@@ -447,6 +584,15 @@ export default function ScheduleDetail({ schedule, denah_kursi = [], tanggal }) 
                                 );
                             })}
                         </div>
+
+                        {formSubmitted && !semuaPenumpangValid && (
+                            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
+                                <svg className="w-4 h-4 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>Harap lengkapi semua nama penumpang dan pastikan nomor identitas sesuai format (16 digit angka untuk KTP/SIM, 8-9 karakter untuk Paspor).</span>
+                            </div>
+                        )}
 
                         {/* Total & Submit */}
                         <div className="flex items-center justify-between border-t border-slate-200 pt-5">
@@ -457,7 +603,7 @@ export default function ScheduleDetail({ schedule, denah_kursi = [], tanggal }) 
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 active:scale-95 transition disabled:opacity-60"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 active:scale-95 transition disabled:opacity-60 cursor-pointer"
                             >
                                 {processing ? (
                                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
