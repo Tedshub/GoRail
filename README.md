@@ -79,8 +79,8 @@ flowchart LR
     Admin --> UC_Export
 
     %% Relations
-    UC_Verify -.->|include| UC_ViewProof
-    UC_Ticket -.->|extend (setelah lunas)| UC_Seat
+    UC_Verify -.->|"include"| UC_ViewProof
+    UC_Ticket -.->|"extend (setelah lunas)"| UC_Seat
 
     classDef uc fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a;
 ```
