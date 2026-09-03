@@ -8,190 +8,45 @@ GoRail adalah aplikasi web reservasi dan manajemen tiket kereta api berbasis **L
 
 Berikut adalah representasi Use Case Diagram sistem GoRail yang mencakup interaksi antara aktor (Guest, Customer, Staff, Admin) dan fungsionalitas sistem:
 
-```mermaid
-flowchart LR
-    %% Actors
-    subgraph Aktor [Aktor Sistem]
-        Guest["Guest / Pengunjung"]
-        Customer["Customer"]
-        Staff["Staff Operasional"]
-        Admin["Administrator"]
-    end
-
-    %% System Boundary
-    subgraph GoRailSystem ["Sistem GoRail"]
-        %% Public & Auth Use Cases
-        UC_Search(["Pencarian & Cek Jadwal Kereta"]):::uc
-        UC_Register(["Registrasi Akun"]):::uc
-        UC_Login(["Login Sistem"]):::uc
-
-        %% Customer Use Cases
-        UC_Profile(["Kelola Profil Pengguna"]):::uc
-        UC_Seat(["Pilih Kursi & Booking Tiket"]):::uc
-        UC_Hist(["Lihat Riwayat & Detail Booking"]):::uc
-        UC_Cancel(["Batalkan Booking"]):::uc
-        UC_UploadPay(["Upload Bukti Pembayaran"]):::uc
-        UC_Ticket(["Lihat & Unduh E-Ticket PDF / QR Code"]):::uc
-
-        %% Staff Use Cases
-        UC_StaffDash(["Lihat Dashboard Operasional"]):::uc
-        UC_Verify(["Verifikasi Pembayaran"]):::uc
-        UC_ViewProof(["Lihat Berkas Bukti Transfer"]):::uc
-        UC_Export(["Export Laporan Booking CSV"]):::uc
-
-        %% Admin Master Data Use Cases
-        UC_ManageUsers(["Kelola Pengguna & Role"]):::uc
-        UC_ManageStations(["Kelola Stasiun & Import CSV"]):::uc
-        UC_ManageTrains(["Kelola Master Kereta Api"]):::uc
-        UC_ManageCoaches(["Kelola Master Gerbong & Kelas"]):::uc
-        UC_ManageSeats(["Kelola Master Kursi"]):::uc
-        UC_ManageSchedules(["Kelola Jadwal & Tarif"]):::uc
-    end
-
-    %% Guest Connections
-    Guest --> UC_Search
-    Guest --> UC_Register
-    Guest --> UC_Login
-
-    %% Customer Connections
-    Customer --> UC_Login
-    Customer --> UC_Profile
-    Customer --> UC_Search
-    Customer --> UC_Seat
-    Customer --> UC_Hist
-    Customer --> UC_Cancel
-    Customer --> UC_UploadPay
-    Customer --> UC_Ticket
-
-    %% Staff Connections
-    Staff --> UC_Login
-    Staff --> UC_StaffDash
-    Staff --> UC_Verify
-    Staff --> UC_ViewProof
-    Staff --> UC_Export
-
-    %% Admin Connections
-    Admin --> UC_Login
-    Admin --> UC_ManageUsers
-    Admin --> UC_ManageStations
-    Admin --> UC_ManageTrains
-    Admin --> UC_ManageCoaches
-    Admin --> UC_ManageSeats
-    Admin --> UC_ManageSchedules
-    Admin --> UC_StaffDash
-    Admin --> UC_Verify
-    Admin --> UC_ViewProof
-    Admin --> UC_Export
-
-    %% Relations (Include & Extend)
-    UC_Verify -.->|"«include»"| UC_ViewProof
-    UC_Seat -.->|"«include»"| UC_Search
-    UC_Ticket -.->|"«extend» (Syarat: Lunas/PAID)"| UC_Hist
-    UC_Cancel -.->|"«extend» (Syarat: Status PENDING)"| UC_Hist
-
-    classDef uc fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a;
-```
-
-### Keterangan Relasi Diagram (`<<include>>` & `<<extend>>`)
-
-Dalam Use Case Diagram di atas, terdapat dua jenis relasi antarfungsionalitas:
-
-1. **`<<include>>` (Relasi Wajib)**: Use case sumber secara mutlak menyertakan/memanggil fungsionalitas use case target agar prosesnya dapat diselesaikan.
-2. **`<<extend>>` (Relasi Bersyarat / Opsional)**: Use case target memperluas use case dasar hanya ketika kondisi tertentu (*extension point*) terpenuhi.
-
-| Jenis Relasi | Use Case Sumber (Asal) | Use Case Target (Tujuan) | Titik Ekstensi / Syarat Kondisi | Penjelasan Detail |
-|---|---|---|---|---|
-| **`<<include>>`** | Verifikasi Pembayaran (`UC_Verify`) | Lihat Berkas Bukti Transfer (`UC_ViewProof`) | *Selalu dijalankan* | Staff/Admin wajib membuka dan melihat file bukti transfer sebelum mengambil keputusan verifikasi (Terima/Tolak). |
-| **`<<include>>`** | Pilih Kursi & Booking Tiket (`UC_Seat`) | Pencarian & Cek Jadwal Kereta (`UC_Search`) | *Selalu dijalankan* | Pemilihan gerbong dan kursi membutuhkan data jadwal perjalanan kereta yang telah dicari terlebih dahulu. |
-| **`<<extend>>`** | Lihat Riwayat & Detail Booking (`UC_Hist`) | Lihat & Unduh E-Ticket PDF / QR (`UC_Ticket`) | Status Pembayaran = `PAID` (Lunas) | E-Ticket beserta QR Code dan opsi unduh PDF hanya akan muncul/dapat diakses jika pembayaran sudah diverifikasi lunas oleh staff. |
-| **`<<extend>>`** | Lihat Riwayat & Detail Booking (`UC_Hist`) | Batalkan Booking (`UC_Cancel`) | Status Booking = `PENDING` (Belum Bayar) | Opsi pembatalan reservasi hanya tersedia selama pesanan belum dibayar dan belum melewati batas kedaluwarsa. |
-
----
-
-## Fitur Utama Backend
-
-### 1. Role-Based Access Control (RBAC) & Autentikasi
-Menggunakan package `spatie/laravel-permission` dengan 3 role:
-- **`customer`**: Pencarian jadwal, pemilihan kursi interaktif, booking tiket, upload bukti pembayaran, melihat & mendownload e-ticket.
-- **`staff`**: Verifikasi pembayaran (terima/tolak), melihat seluruh booking dan penumpang, export laporan booking ke CSV.
-- **`admin`**: Akses penuh mengelola master data (Stasiun, Kereta, Gerbong, Kursi, Jadwal & Tarif), mengelola user/pengguna, dan import massal data stasiun dari file CSV.
-
-### 2. Pencarian Jadwal & Pemilihan Kursi
-- Filter pencarian berdasarkan stasiun asal, tujuan, dan tanggal keberangkatan.
-- Denah ketersediaan kursi (*seat map*) dinamis per gerbong dengan pengecekan konflik reservasi sebelum transaksi.
-
-### 3. Alur Pembayaran & State Machine
-Transisi status hanya dapat dilakukan melalui method model khusus:
-- **Status Pembayaran (`StatusPembayaran`)**: `UNPAID` (Belum Bayar) -> `WAITING_VERIFICATION` (Menunggu Verifikasi) -> `PAID` (Lunas) / `REJECTED` (Ditolak).
-- **Status Booking (`StatusBooking`)**: `PENDING` (Menunggu) -> `CONFIRMED` (Dikonfirmasi) / `CANCELLED` (Dibatalkan) -> `COMPLETED` (Selesai).
-- Saat pembayaran berstatus `PAID`, booking secara otomatis dikonfirmasi (`CONFIRMED`).
-
-### 4. Keamanan Bukti Pembayaran
-- File bukti pembayaran disimpan pada storage privat (`storage/app/private/bukti-pembayaran/`).
-- Tidak dapat diakses publik secara langsung; diakses melalui route terproteksi dengan validasi otorisasi `PaymentPolicy`.
-
-### 5. E-Ticket, QR Code & Download PDF
-- Tiket hanya dapat diterbitkan setelah pembayaran lunas (`PAID`).
-- Dilengkapi QR Code unik menggunakan `simplesoftwareio/simple-qrcode`.
-- Export tiket ke dokumen PDF siap cetak menggunakan `barryvdh/laravel-dompdf`.
-
-### 6. Fitur Array & Native File I/O (Sesuai Spesifikasi)
-- **Export Laporan Booking ke CSV**: Penyusunan data menggunakan array terstruktur dan fungsi native PHP (`fopen`, `fputcsv`, `fclose`).
-- **Import Data Stasiun Massal**: Pembacaan file CSV stasiun menggunakan `fopen`, `fgetcsv`, validasi baris, dan batch insert ke database.
-
----
-
-## Matriks Hak Akses Role (RBAC)
-
-Berikut adalah tabel matriks hak akses untuk setiap fungsionalitas dan fitur dalam sistem:
-
-| Modul / Fitur | Guest | Customer | Staff | Admin | Keterangan / Endpoint |
-|---|:---:|:---:|:---:|:---:|---|
-| **Eksplorasi & Publik** | | | | | |
-| Melihat Halaman Utama & Jadwal Populer | Ya | Ya | Ya | Ya | `GET /` |
-| Pencarian & Filter Jadwal Kereta | Ya | Ya | Ya | Ya | `GET /schedules/search` |
-| Melihat Detail Jadwal & Denah Kursi | Ya | Ya | Ya | Ya | `GET /schedules/{schedule}` |
-| Registrasi Akun Baru | Ya | - | - | - | `GET /register`, `POST /register` |
-| Login & Logout Sistem | Ya | Ya | Ya | Ya | `GET /login`, `POST /login`, `POST /logout` |
-| **Akun & Profil** | | | | | |
-| Dashboard Pengguna | - | Ya | Ya | Ya | `GET /dashboard` |
-| Mengubah Profil & Kata Sandi | - | Ya | Ya | Ya | `GET /profile`, `PATCH /profile` |
-| Menghapus Akun Pribadi | - | Ya | Ya | Ya | `DELETE /profile` |
-| **Reservasi & Tiket (Customer)** | | | | | |
-| Pemilihan Kursi & Pembuatan Booking | - | Ya | - | - | `POST /bookings` |
-| Melihat Riwayat Booking Pribadi | - | Ya | - | - | `GET /bookings` |
-| Melihat Detail Booking Pribadi | - | Ya | - | - | `GET /bookings/{booking}` |
-| Membatalkan Booking Pribadi | - | Ya | - | - | `POST /bookings/{booking}/cancel` |
-| Mengunggah Bukti Pembayaran | - | Ya | - | - | `POST /payments/{booking}/upload` |
-| Melihat E-Ticket & QR Code | - | Ya | - | - | `GET /tickets/{booking}` (status lunas) |
-| Mengunduh E-Ticket (PDF) | - | Ya | - | - | `GET /tickets/{booking}/download` |
-| **Verifikasi & Operasional (Staff)** | | | | | |
-| Melihat Daftar Pembayaran Menunggu Verifikasi | - | - | Ya | Ya | `GET /staff/payments` |
-| Mengakses Berkas Bukti Pembayaran Privat | - | - | Ya | Ya | `GET /payments/{payment}/bukti` |
-| Verifikasi Pembayaran (Terima / Tolak) | - | - | Ya | Ya | `POST /staff/payments/{payment}/verify` |
-| Export Laporan Booking ke File CSV | - | - | Ya | Ya | `GET /reports/bookings/export` |
-| **Manajemen Master Data (Admin)** | | | | | |
-| Kelola Data Pengguna & Penetapan Role | - | - | - | Ya | `RESOURCE /admin/users` |
-| Kelola Master Stasiun | - | - | - | Ya | `RESOURCE /admin/stations` |
-| Import Data Stasiun Massal (CSV) | - | - | - | Ya | `POST /admin/stations/import` |
-| Kelola Master Kereta Api | - | - | - | Ya | `RESOURCE /admin/trains` |
-| Kelola Master Gerbong & Kelas | - | - | - | Ya | `RESOURCE /admin/coaches` |
-| Kelola Master Kursi | - | - | - | Ya | `RESOURCE /admin/seats` |
-| Kelola Master Jadwal & Tarif Perjalanan | - | - | - | Ya | `RESOURCE /admin/schedules` |
+![Use Case Diagram](public/use%20case%20gorail.jpg)
 
 ---
 
 ## Tech Stack & Library
 
-| Komponen | Teknologi |
-|---|---|
-| **Framework Backend** | Laravel 13 (PHP 8.3+) |
-| **Database** | MySQL |
-| **Frontend Adapter** | Inertia.js (React) |
-| **RBAC / Hak Akses** | `spatie/laravel-permission` |
-| **PDF Generator** | `barryvdh/laravel-dompdf` |
-| **QR Code** | `simplesoftwareio/simple-qrcode` |
-| **File I/O** | Native PHP Streams (`fgetcsv`, `fputcsv`) |
+Berikut adalah rincian teknologi, starter kit, library, CSS framework, serta plugin/package yang digunakan pada project GoRail:
+
+| Kategori | Teknologi / Package | Keterangan |
+|---|---|---|
+| **Backend Framework** | **Laravel 13** (`laravel/framework: ^13.17`) | Core web application framework (PHP 8.3+) |
+| **Starter Kit** | **Laravel Breeze** (`laravel/breeze: ^2.4`) | Auth scaffolding bawaan Laravel berbasis Inertia + React |
+| **Frontend Library** | **React 18** (`react`, `react-dom: ^18.2.0`) | UI Library untuk komponen interaktif dan dinamis |
+| **Fullstack Bridge** | **Inertia.js** (`@inertiajs/react: ^2.0.0`, `inertiajs/inertia-laravel: ^2.0`) | Menghubungkan Laravel backend dengan React tanpa REST API terpisah |
+| **CSS Framework** | **Tailwind CSS** (`tailwindcss: ^3.2.1` / `@tailwindcss/vite: ^4.0.0`) | Utility-first CSS framework *(Catatan: **Bukan Bootstrap**, Bootstrap **tidak** digunakan di project ini)* |
+| **Build Tool / Bundler** | **Vite 8** (`vite: ^8.0.0`) | Frontend development & asset bundler super cepat |
+| **Database** | **MySQL** | Relational database management system |
+
+### Plugin & Package yang Digunakan
+
+#### **1. Backend Packages & Plugins (Composer / PHP)**
+- **`laravel/breeze`**: Starter kit autentikasi (login, register, reset password, profil).
+- **`spatie/laravel-permission`**: Role-Based Access Control (RBAC) untuk pemisahan role `customer`, `staff`, dan `admin`.
+- **`barryvdh/laravel-dompdf`**: Generator dokumen PDF untuk pencetakan e-ticket.
+- **`simplesoftwareio/simple-qrcode`**: Generator QR Code tiket yang dipindai saat verifikasi.
+- **`tightenco/ziggy`**: Menyediakan helper route Laravel (`route(...)`) secara langsung di komponen React.
+- **`laravel/sanctum`**: Otentikasi token / session guard.
+- **`laravel/tinker`**: REPL CLI interaktif untuk debugging data Laravel.
+- **`laravel/pint`**: PHP code style fixer & linter.
+- **`laravel/pail`**: Tool logging interaktif via CLI.
+
+#### **2. Frontend Plugins & Libraries (NPM / JS)**
+- **`@vitejs/plugin-react`**: Plugin Vite resmi untuk kompilasi Fast Refresh React (JSX/TSX).
+- **`laravel-vite-plugin`**: Plugin Vite integrasi resmi dengan ekosistem Laravel blade/assets.
+- **`@tailwindcss/vite` & `@tailwindcss/forms`**: Plugin Tailwind CSS untuk form styling dan Vite compilation.
+- **`@headlessui/react`**: Komponen UI headless tanpa style untuk aksesibilitas tinggi (modal, dropdown, transition).
+- **`lucide-react`**: Kumpulan icon modern untuk UI GoRail.
+- **`axios`**: HTTP Client berbasis Promise untuk request asynchronous.
+- **`concurrently`**: Utility runner untuk menjalankan proses secara bersamaan.
 
 ---
 
