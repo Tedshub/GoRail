@@ -2,7 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Modal from '@/Components/Modal';
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
-import { CheckCircle2, XCircle, Eye, Download, ExternalLink, Calendar, Clock, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Download, ExternalLink, Calendar, Clock, ArrowRight, AlertCircle, RefreshCw, FileSpreadsheet } from 'lucide-react';
+import ExportLaporanModal from '@/Components/ExportLaporanModal';
 
 export default function PaymentVerificationIndex({ payments }) {
     const { flash } = usePage().props;
@@ -15,6 +16,7 @@ export default function PaymentVerificationIndex({ payments }) {
     const [modalAksiTerbuka, setModalAksiTerbuka] = useState(false);
     const [tipeAksi, setTipeAksi] = useState('verifikasi'); // 'verifikasi' | 'tolak'
     const [sedangMemproses, setSedangMemproses] = useState(false);
+    const [modalExportTerbuka, setModalExportTerbuka] = useState(false);
 
     const formatRupiah = (angka) => {
         return new Intl.NumberFormat('id-ID', {
@@ -160,13 +162,14 @@ export default function PaymentVerificationIndex({ payments }) {
                             </p>
                         </div>
 
-                        <a
-                            href={getExportUrl()}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xs transition active:scale-95 self-start sm:self-auto"
+                        <button
+                            type="button"
+                            onClick={() => setModalExportTerbuka(true)}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 backdrop-blur-xs transition active:scale-95 self-start sm:self-auto"
                         >
-                            <Download className="w-4 h-4 text-emerald-400" />
-                            Ekspor CSV
-                        </a>
+                            <FileSpreadsheet className="w-4 h-4 text-emerald-100" />
+                            Ekspor Excel
+                        </button>
                     </div>
                 </div>
 
@@ -607,6 +610,12 @@ export default function PaymentVerificationIndex({ payments }) {
                     </div>
                 </div>
             </Modal>
+
+            {/* ─── Modal Filter Unduh Laporan Excel (.xlsx) ─── */}
+            <ExportLaporanModal
+                show={modalExportTerbuka}
+                onClose={() => setModalExportTerbuka(false)}
+            />
         </AuthenticatedLayout>
     );
 }

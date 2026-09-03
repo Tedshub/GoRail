@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="UTF-8">
     <title>E-Ticket - {{ $booking->kode_booking }}</title>
     <style>
         @page {
             margin: 20px;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'DejaVu Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'DejaVu Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             color: #1e293b;
             font-size: 12px;
             line-height: 1.4;
@@ -89,15 +90,19 @@
             padding-bottom: 15px;
         }
         .station-box {
-            width: 40%;
+            width: 38%;
         }
         .arrow-box {
-            width: 20%;
+            width: 24%;
             text-align: center;
             vertical-align: middle;
             color: #059669;
-            font-weight: bold;
-            font-size: 14px;
+        }
+        .arrow-line {
+            display: inline-block;
+            border-top: 2px solid #059669;
+            width: 60px;
+            margin-bottom: 3px;
         }
         .passengers-table {
             width: 100%;
@@ -159,7 +164,7 @@
                 <tr>
                     <td>
                         <h1 class="brand-title">GoRail Boarding Pass</h1>
-                        <p class="brand-sub">PT GoRail Indonesia — Sistem Reservasi Tiket Kereta Api</p>
+                        <p class="brand-sub">PT GoRail Indonesia - Sistem Reservasi Tiket Kereta Api</p>
                     </td>
                     <td class="booking-code-box">
                         <div class="booking-code-label">Kode Booking</div>
@@ -206,8 +211,10 @@
                         <div style="font-size: 10px; color: #64748b;">{{ $booking->schedule->stationAsal->kota ?? '' }}</div>
                     </td>
                     <td class="arrow-box">
-                        ══════►<br>
-                        <span style="font-size: 9px; color: #64748b;">LANGSUNG</span>
+                        <div style="font-size: 13px; font-weight: bold; letter-spacing: -1px; color: #059669;">
+                            -------&gt;
+                        </div>
+                        <span style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase;">LANGSUNG</span>
                     </td>
                     <td class="station-box" style="text-align: right;">
                         <div class="label">Kedatangan</div>

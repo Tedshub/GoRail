@@ -136,7 +136,7 @@ npm run dev
 ### Staff (`role:staff,admin`)
 - `GET /staff/payments` — Daftar Pembayaran Menunggu Verifikasi
 - `POST /staff/payments/{payment}/verify` — Verifikasi / Tolak Pembayaran
-- `GET /reports/bookings/export` — Export Laporan Booking ke CSV
+- `GET /reports/bookings/export` — Export Laporan Booking ke Excel (.xlsx) dengan filter rentang waktu
 
 ### Admin (`role:admin`)
 - `RESOURCE /admin/users` — Manajemen Pengguna & Role

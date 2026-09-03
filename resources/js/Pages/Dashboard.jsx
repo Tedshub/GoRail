@@ -19,8 +19,10 @@ import {
     ArrowRightLeft,
     FileText,
     Settings,
-    MapPin
+    MapPin,
+    FileSpreadsheet
 } from 'lucide-react';
+import ExportLaporanModal from '@/Components/ExportLaporanModal';
 
 const getTanggalHariIni = () => {
     const d = new Date();
@@ -48,6 +50,9 @@ export default function Dashboard({ stats = {}, recentBookings = [], upcomingSch
     const [stasiunTujuan, setStasiunTujuan] = useState(daftarStasiun[1]?.id || '');
     const [tanggalKeberangkatan, setTanggalKeberangkatan] = useState(tanggalHariIni);
     const [searchError, setSearchError] = useState('');
+
+    // State untuk modal filter export laporan
+    const [modalExportTerbuka, setModalExportTerbuka] = useState(false);
 
     const handleTukarStasiun = () => {
         const temp = stasiunAsal;
@@ -347,16 +352,20 @@ export default function Dashboard({ stats = {}, recentBookings = [], upcomingSch
                             <p className="text-[11px] text-slate-500 mt-1">Persetujuan bukti transfer</p>
                         </Link>
 
-                        <a
-                            href={route('reports.bookings.export')}
-                            className="p-3.5 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 transition group"
+                        <button
+                            type="button"
+                            onClick={() => setModalExportTerbuka(true)}
+                            className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition group text-left w-full"
                         >
-                            <div className="font-bold text-xs text-slate-800 group-hover:text-amber-700 flex items-center justify-between">
-                                <span>Ekspor Laporan</span>
+                            <div className="font-bold text-xs text-slate-800 group-hover:text-emerald-700 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                                    Ekspor Laporan
+                                </span>
                                 <span>&rarr;</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 mt-1">Download CSV transaksi</p>
-                        </a>
+                            <p className="text-[11px] text-slate-500 mt-1">Download Excel (.xlsx) dengan filter</p>
+                        </button>
 
                         <Link
                             href={route('schedules.search')}
@@ -763,18 +772,22 @@ export default function Dashboard({ stats = {}, recentBookings = [], upcomingSch
                                 </div>
                             </div>
 
-                            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-amber-300 transition group flex flex-col justify-between">
+                            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-emerald-300 transition group flex flex-col justify-between">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[11px] sm:text-xs font-semibold text-slate-500">Laporan Transaksi</span>
-                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition">
-                                        <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition">
+                                        <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </div>
                                 </div>
                                 <div className="mt-2 sm:mt-3">
-                                    <div className="text-base sm:text-xl font-bold text-slate-900">Format CSV</div>
-                                    <a href={route('reports.bookings.export')} className="text-[10px] sm:text-[11px] font-bold text-amber-600 hover:text-amber-700 hover:underline mt-1 inline-flex items-center gap-1">
+                                    <div className="text-base sm:text-xl font-bold text-slate-900">Format Excel</div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setModalExportTerbuka(true)}
+                                        className="text-[10px] sm:text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline mt-1 inline-flex items-center gap-1"
+                                    >
                                         Unduh Laporan &rarr;
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         </>
@@ -907,6 +920,12 @@ export default function Dashboard({ stats = {}, recentBookings = [], upcomingSch
                         </div>
                     </div>
                 )}
+
+                {/* Modal Filter Export Laporan Excel */}
+                <ExportLaporanModal
+                    show={modalExportTerbuka}
+                    onClose={() => setModalExportTerbuka(false)}
+                />
             </div>
         </AuthenticatedLayout>
     );
